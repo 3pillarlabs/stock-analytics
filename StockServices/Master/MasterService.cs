@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StockServices
+namespace StockServices.Master
 {
-    public class Master
+    public class MasterService
     {
         
 
