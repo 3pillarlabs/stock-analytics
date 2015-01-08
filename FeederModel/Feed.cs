@@ -23,7 +23,7 @@ namespace StockModel
         public double Low { get; set; }
 
         public double Volume { get; set; }
- 
- 
+
+        public Int64 TimeStamp { get; set; }
     }
 }

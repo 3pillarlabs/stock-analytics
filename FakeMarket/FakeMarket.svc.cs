@@ -6,6 +6,8 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
 using StockModel;
+using StockServices.FakeMarketService;
+using StockServices.Dashboard;
 
 
 namespace FakeMarket
@@ -14,17 +16,43 @@ namespace FakeMarket
     // NOTE: In order to launch WCF Test Client for testing this service, please select Service1.svc or Service1.svc.cs at the Solution Explorer and start debugging.
     public class FakeMarket : IFakeMarket
     {
-        public Symbol  GetPriceBySymbol(int symbolId, int exchangeId)
+        public Symbol symbolInfo = new Symbol();
+        List<Feed[]> generatedData = new List<Feed[]>();
+        List<Symbol> symbolList = new List<Symbol>();
+        public FakeMarket()
         {
-            throw new NotImplementedException();
+            if (InMemoryObjects.fakeFeeds.Count == 0)
+            {
+                FakeDataGenerator fakeData = new FakeDataGenerator();
+            }
+            generatedData = InMemoryObjects.fakeFeeds;
+            symbolList = InMemoryObjects.ExchangeSymbolList.Symbols;
         }
 
-        public Symbol GetPriceBySymbol(int symbolId, int exchangeId, TimeSpan lastAccessTime)
+        public Symbol GetPriceBySymbol(int symbolId, int exchangeId)
         {
-            throw new NotImplementedException();
+            if (generatedData.Count != 0)
+            {
+                Feed data = generatedData.Last()[symbolId];
+
+                symbolInfo = symbolList.SingleOrDefault(x => x.Id == symbolId);
+                symbolInfo.DefaultVal = data.LTP;
+            }
+            return symbolInfo;
         }
 
-        public Symbol GetPriceBySymbol(int symbolId, int exchangeId, bool getAllData)
+        public List<Feed> GetPriceBySymbol(int symbolId, int exchangeId, TimeSpan lastAccessTime)
+        {
+            List<Feed> feedsList = new List<Feed>();
+            if (generatedData.Count != 0)
+            {
+                var list = generatedData.Select(x => x[symbolId]).ToList();
+                feedsList = list.Where(x => x.TimeStamp >= lastAccessTime.Milliseconds).ToList();
+            }
+            return feedsList;
+        }
+
+        public List<Symbol> GetPriceBySymbol(int symbolId, int exchangeId, bool getAllData)
         {
             throw new NotImplementedException();
         }
@@ -34,12 +62,12 @@ namespace FakeMarket
             throw new NotImplementedException();
         }
 
-        public List<Symbol> GetPrice(int exchangeId, TimeSpan lastAccessTime)
+        public List<List<Symbol>> GetPrice(int exchangeId, TimeSpan lastAccessTime)
         {
             throw new NotImplementedException();
         }
 
-        public List<Symbol> GetPrice(int exchangeId, bool getAllData)
+        public List<List<Symbol>> GetPrice(int exchangeId, bool getAllData)
         {
             throw new NotImplementedException();
         }

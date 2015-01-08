@@ -13,9 +13,11 @@ namespace StockServices.Dashboard
         {
             ExchangeSymbolList = new ExchangeSymbol();
             feeds = new List<Feed>();
+            fakeFeeds = new List<Feed[]>();
         }
 
-        public static ExchangeSymbol ExchangeSymbolList {get; set;}
-        public static List<Feed> feeds{get; set;}
+        public static ExchangeSymbol ExchangeSymbolList { get; set; }
+        public static List<Feed> feeds { get; set; }
+        public static List<Feed[]> fakeFeeds { get; set; }
     }
 }

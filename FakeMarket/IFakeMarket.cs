@@ -14,27 +14,27 @@ namespace FakeMarket
     public interface IFakeMarket
     {
 
-        [OperationContract]
+        [OperationContract(Name = "GetPriceBySymbolCurrent")]
         Symbol GetPriceBySymbol(int symbolId, int exchangeId);
 
-        [OperationContract]
-        Symbol GetPriceBySymbol(int symbolId, int exchangeId, TimeSpan lastAccessTime);
+        [OperationContract(Name = "GetPriceBySymbolTimeRange")]
+        List<Feed> GetPriceBySymbol(int symbolId, int exchangeId, TimeSpan lastAccessTime);
 
-        [OperationContract]
-        Symbol GetPriceBySymbol(int symbolId, int exchangeId, Boolean getAllData);
+        [OperationContract(Name = "GetPriceBySymbolAll")]
+        List<Symbol> GetPriceBySymbol(int symbolId, int exchangeId, Boolean getAllData);
 
 
-        [OperationContract]
+        [OperationContract(Name = "GetPriceForSymbolsCurrent")]
         List<Symbol> GetPrice(int exchangeId);
 
-        [OperationContract]
-        List<Symbol> GetPrice(int exchangeId, TimeSpan lastAccessTime);
+        [OperationContract(Name = "GetPriceForSymbolsTimeRange")]
+        List<List<Symbol>> GetPrice(int exchangeId, TimeSpan lastAccessTime);
 
-        [OperationContract]
-        List<Symbol> GetPrice(int exchangeId, Boolean getAllData);
-        
+        [OperationContract(Name = "GetPriceForSymbolsAll")]
+        List<List<Symbol>> GetPrice(int exchangeId, Boolean getAllData);
+
     }
 
 
-    
+
 }

@@ -85,6 +85,10 @@
       <Project>{404a4600-7094-4568-ae20-41f171b5f98a}</Project>
       <Name>StockModel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\StockServices\StockServices.csproj">
+      <Project>{da76c3d5-99e2-46bd-b09b-66b06e65dcbd}</Project>
+      <Name>StockServices</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
