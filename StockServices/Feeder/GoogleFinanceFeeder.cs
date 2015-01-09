@@ -13,5 +13,10 @@ namespace StockServices.Feeder
         {
             throw new NotImplementedException();
         }
+
+        public List<List<StockModel.Feed>> GetFeedList(int symbolId, int exchangeId, TimeSpan lastAccessTime)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

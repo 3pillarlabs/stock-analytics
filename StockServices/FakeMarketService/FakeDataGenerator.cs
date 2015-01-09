@@ -22,15 +22,16 @@ namespace StockServices.FakeMarketService
         public FakeDataGenerator()
         {
             TimeSpan _updateDuration = TimeSpan.FromMilliseconds(constant.fakeDataGeneratePeriod);
+            GenerateData(null);
             Timer dataGenerateTimer = new Timer(GenerateData, null, TimeSpan.FromMilliseconds(0), _updateDuration);
         }
 
         public static void GenerateData(object state)
         {
             //Method to generate feeds and update the in memory objects
-            InMemoryObjects.fakeFeeds = new List<Feed[]>();
             List<StockModel.Symbol> symbols = GetAllSymbols();
             TimeSpan _updateInterval = TimeSpan.FromMilliseconds(constant.fakeDataGenerateInterval);
+            UpdateData(symbols);
             Timer timer = new Timer(UpdateData, symbols, _updateInterval, _updateInterval);
         }
 
@@ -57,8 +58,8 @@ namespace StockServices.FakeMarketService
                     }
                     symbol.DefaultVal = random.NextDouble() * 1000;
                     symbol.Id = i;
-                    i = i + 1;
                 }
+                i = i + 1;
                 symbols.Add(symbol);
             }
             InMemoryObjects.ExchangeSymbolList.Symbols = symbols;

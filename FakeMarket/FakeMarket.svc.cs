@@ -46,8 +46,9 @@ namespace FakeMarket
             List<Feed> feedsList = new List<Feed>();
             if (generatedData.Count != 0)
             {
-                var list = generatedData.Select(x => x[symbolId]).ToList();
+                List<Feed> list = generatedData.Select(x => x[symbolId - 1]).ToList();
                 feedsList = list.Where(x => x.TimeStamp >= lastAccessTime.Milliseconds).ToList();
+                
             }
             return feedsList;
         }

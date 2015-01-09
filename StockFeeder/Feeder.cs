@@ -12,12 +12,15 @@ using StockFeeder;
 using FeederInterface.Sender;
 using StockServices.Factory;
 using StockModel.Master;
+using FeederInterface.Feeder;
+using StockModel;
 
 namespace StockFeeder
 {
     public partial class Feeder : ServiceBase
     {
         delegate void MethodDelegate();
+        List<List<Feed>> feedList = new List<List<Feed>>();
 
         public Feeder()
         {
@@ -26,6 +29,8 @@ namespace StockFeeder
 
         protected override void OnStart(string[] args)
         {
+            IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
+            feedList = feeder.GetFeedList(2,1, new TimeSpan(0,0,0));
             MethodDelegate metho = new MethodDelegate(this.start);
             metho.BeginInvoke(null,null);
         }
@@ -36,7 +41,7 @@ namespace StockFeeder
         private void start()
         {
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
-            sender.SendFeed(null);
+            sender.SendFeed(feedList);
 
         }
     }

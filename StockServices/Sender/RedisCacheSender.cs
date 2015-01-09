@@ -18,13 +18,18 @@ namespace StockServices.Sender
         IDatabase cache = RedisCacheConfig.GetCache();
         StreamWriter writer = new StreamWriter(new FileStream(@"c:\test.txt", FileMode.Append));
 
-        public bool SendFeed(StockModel.Feed feed)
+        public bool SendFeed(List<List<StockModel.Feed>> feedListRange)
         {
 
             Stopwatch stopWatch = Stopwatch.StartNew();
+            List<StockModel.Feed> feed = new List<StockModel.Feed>();
+            feed = feedListRange[feedListRange.Count - 1];
 
-            
-            Parallel.For(0, 1000, send);
+            Parallel.For(0, 1000, i =>
+            {
+                cache.StringSetAsync("key21=" + i.ToString(), feed[feed.Count - 1].LTP.ToString(), TimeSpan.FromMinutes(15));
+                writer.WriteLine(cache.StringGet("key21=" + i.ToString()));
+            });
 
             stopWatch.Stop();
             

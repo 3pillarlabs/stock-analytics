@@ -10,5 +10,6 @@ namespace FeederInterface.Feeder
     public interface IFeeder
     {
         List<Feed> GetFeed(int symbolId, int exchangeId);
+        List<List<Feed>> GetFeedList(int symbolId, int exchangeId, TimeSpan lastAccessTime);
     }
 }
