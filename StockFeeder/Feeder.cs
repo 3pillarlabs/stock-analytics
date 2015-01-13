@@ -21,6 +21,7 @@ namespace StockFeeder
     {
         delegate void MethodDelegate();
         List<List<Feed>> feedList = new List<List<Feed>>();
+        List<List<List<Feed>>> list_feedList = new List<List<List<Feed>>>();
 
         public Feeder()
         {
@@ -29,8 +30,6 @@ namespace StockFeeder
 
         protected override void OnStart(string[] args)
         {
-            IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
-            feedList = feeder.GetFeedList(2,1, new TimeSpan(0,0,0));
             MethodDelegate metho = new MethodDelegate(this.start);
             metho.BeginInvoke(null,null);
         }
@@ -40,9 +39,21 @@ namespace StockFeeder
 
         private void start()
         {
+            for (int i = 0; i < 6; i++)
+            {   
+                System.Threading.Thread.Sleep(5000);
+            }
+            IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
+            for (int i = 1; i <= 10; i++)       // Get the stockValue for symbolId from 1 to 10
+            {
+                feedList = feeder.GetFeedList(i, 1, TimeSpan.FromSeconds(10));      // Get the list of values for a given symbolId of a market for given time-span
+                list_feedList.Add(feedList);
+            }
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
-            sender.SendFeed(feedList);
-
+            foreach (List<List<Feed>> feed_list in list_feedList)
+            {
+                sender.SendFeed(feed_list);     // Sends the stockValues to store them in RedisCache
+            }
         }
     }
 }

@@ -16,33 +16,25 @@ namespace StockServices.Sender
     public class RedisCacheSender : ISender
     {
         IDatabase cache = RedisCacheConfig.GetCache();
-        StreamWriter writer = new StreamWriter(new FileStream(@"c:\test.txt", FileMode.Append));
+        StreamWriter writer = new StreamWriter(new FileStream(@"d:\test.txt", FileMode.Append, FileAccess.Write));
 
         public bool SendFeed(List<List<StockModel.Feed>> feedListRange)
         {
-
             Stopwatch stopWatch = Stopwatch.StartNew();
             List<StockModel.Feed> feed = new List<StockModel.Feed>();
             feed = feedListRange[feedListRange.Count - 1];
 
-            Parallel.For(0, 1000, i =>
+            for(int j = 0; j< feed.Count; j++)
             {
-                cache.StringSetAsync("key21=" + i.ToString(), feed[feed.Count - 1].LTP.ToString(), TimeSpan.FromMinutes(15));
-                writer.WriteLine(cache.StringGet("key21=" + i.ToString()));
-            });
-
+                cache.StringSetAsync(feed[j].SymbolId.ToString() + j.ToString(), feed[j].LTP.ToString(), TimeSpan.FromMinutes(90)); // Sets the stockPrice as value in RedisCache for symbolId as a key
+                string value = cache.StringGet(feed[j].SymbolId.ToString() + j.ToString());
+                writer.WriteLine(value + "-" + feed[j].SymbolId.ToString() + j.ToString());
+            }
             stopWatch.Stop();
             
             writer.WriteLine(stopWatch.ElapsedMilliseconds.ToString());
-            
-            
+            writer.Flush();
             return true;
-        }
-
-        public void send(int i)
-        {
-            cache.StringSetAsync("key21=" + i.ToString(), "key21value=" + i.ToString(), TimeSpan.FromMinutes(15));
-            writer.WriteLine(cache.StringGet("key21=" + i.ToString()));
         }
     }
 }

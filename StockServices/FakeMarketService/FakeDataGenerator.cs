@@ -28,15 +28,16 @@ namespace StockServices.FakeMarketService
 
         public static void GenerateData(object state)
         {
-            //Method to generate feeds and update the in memory objects
+            // Method to generate feeds and update the in memory objects
             List<StockModel.Symbol> symbols = GetAllSymbols();
             TimeSpan _updateInterval = TimeSpan.FromMilliseconds(constant.fakeDataGenerateInterval);
             UpdateData(symbols);
-            Timer timer = new Timer(UpdateData, symbols, _updateInterval, _updateInterval);
+            Timer timer = new Timer(UpdateData, symbols, _updateInterval, _updateInterval); // Timer to update the stock-values after every given time-interval
         }
 
         public static List<StockModel.Symbol> GetAllSymbols()
         {
+            // Method to get all the company names & their symbols and set their default value & Id
             int i = 1;
             Constants constant = new Constants();
             Random random = new Random();
@@ -69,9 +70,11 @@ namespace StockServices.FakeMarketService
 
         public static void UpdateData(object state)
         {
+            // Method to change the values of all the stocks randomly in a fixed range 
             List<StockModel.Symbol> symbols = (List<StockModel.Symbol>)state;
             Feed[] feedsArray = new Feed[symbols.Count];
-            Parallel.For(0, symbols.Count, i =>
+            
+            for (int i = 0; i < symbols.Count; i++)
             {
                 double changePercent = random.NextDouble() * (constant.maximumChangePercent - constant.minimumChangePercent) + constant.minimumChangePercent;
                 symbols[i].DefaultVal = symbols[i].DefaultVal + symbols[i].DefaultVal * changePercent / 100;
@@ -82,7 +85,7 @@ namespace StockServices.FakeMarketService
 
                 feed.TimeStamp = Convert.ToInt64((DateTime.Now - epoch).TotalMilliseconds);
                 feedsArray[i] = feed;
-            });
+            }
             InMemoryObjects.fakeFeeds.Add(feedsArray);
         }
     }
