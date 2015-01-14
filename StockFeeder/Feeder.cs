@@ -14,6 +14,8 @@ using StockServices.Factory;
 using StockModel.Master;
 using FeederInterface.Feeder;
 using StockModel;
+using StockServices.Dashboard;
+using StockServices.FakeMarketService;
 
 namespace StockFeeder
 {
@@ -31,7 +33,7 @@ namespace StockFeeder
         protected override void OnStart(string[] args)
         {
             MethodDelegate metho = new MethodDelegate(this.start);
-            metho.BeginInvoke(null,null);
+            metho.BeginInvoke(null, null);
         }
         protected override void OnStop()
         {
@@ -39,20 +41,23 @@ namespace StockFeeder
 
         private void start()
         {
-            for (int i = 0; i < 6; i++)
-            {   
-                System.Threading.Thread.Sleep(5000);
-            }
+            //Loading system startup data
+            InMemoryObjects.LoadInMemoryObjects();
+
+            //Initiate fake data generation from fake market
+            //Later it will also include data generation from google finance
+            TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
+            FakeDataGenerator.StartFakeDataGeneration(updateDuration);
+
+
             IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
+            ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
+
+            //For each market start generating the data and pushing it into redis cache
             for (int i = 1; i <= 10; i++)       // Get the stockValue for symbolId from 1 to 10
             {
                 feedList = feeder.GetFeedList(i, 1, TimeSpan.FromSeconds(10));      // Get the list of values for a given symbolId of a market for given time-span
-                list_feedList.Add(feedList);
-            }
-            ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
-            foreach (List<List<Feed>> feed_list in list_feedList)
-            {
-                sender.SendFeed(feed_list);     // Sends the stockValues to store them in RedisCache
+                sender.SendFeed(feedList);
             }
         }
     }

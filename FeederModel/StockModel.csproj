@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExchangeFeeds.cs" />
     <Compile Include="ExchangeSymbol.cs" />
     <Compile Include="Feed.cs" />
     <Compile Include="Master\Constants.cs" />
@@ -48,6 +49,7 @@
     <Compile Include="Master\Enums.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Symbol.cs" />
+    <Compile Include="SymbolFeeds.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

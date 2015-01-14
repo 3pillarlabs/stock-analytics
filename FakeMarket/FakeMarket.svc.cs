@@ -21,12 +21,11 @@ namespace FakeMarket
         List<Symbol> symbolList = new List<Symbol>();
         public FakeMarket()
         {
-            if (InMemoryObjects.fakeFeeds.Count == 0)
+            if (InMemoryObjects.FakeFeeds.Count == 0)
             {
                 FakeDataGenerator fakeData = new FakeDataGenerator();
             }
-            generatedData = InMemoryObjects.fakeFeeds;
-            symbolList = InMemoryObjects.ExchangeSymbolList.Symbols;
+            
         }
 
         public Symbol GetPriceBySymbol(int symbolId, int exchangeId)

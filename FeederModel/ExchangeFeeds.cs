@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StockServices
+namespace StockModel
 {
-    public class SymbolService
+    public class ExchangeFeeds
     {
-        
+        public int ExchangeId;
+
+        public List<SymbolFeeds> ExchaneSymbolFeed;
     }
 }

@@ -6,12 +6,16 @@ using System.Threading.Tasks;
 
 namespace StockModel.Master
 {
-    public class Constants
+    public static class Constants
     {
-        public double maximumChangePercent { get { return 2.0; } }
-        public double minimumChangePercent { get { return -2.0; } }
-        public string symbolsFilePath { get { return @"C:\Symbol.json"; } }
-        public int fakeDataGenerateInterval { get { return 1000; } }
-        public int fakeDataGeneratePeriod { get { return 1000 * 60 * 10; } }
+        public const double  MAX_CHANGE_PERC =2.0;
+
+        public const double MIN_CHANGE_PERC=-2.0; 
+
+        public const  string SYMBOL_FILE_PATH = @"C:\Symbol.json"; 
+        
+        public const int FAKE_DATA_GENERATE_INTERVAL =1000;
+        
+        public const int FAKE_DATA_GENERATE_PERIOD =1000 * 60 * 10; 
     }
 }

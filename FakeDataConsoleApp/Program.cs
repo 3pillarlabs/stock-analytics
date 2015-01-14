@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using FeederInterface.Sender;
+using StockServices.Dashboard;
+using StockServices.FakeMarketService;
 
 namespace FakeDataConsoleApp
 {
@@ -17,26 +19,26 @@ namespace FakeDataConsoleApp
         static int i;
         static void Main(string[] args)
         {
-            i = 0;
             List<List<Feed>> feedList = new List<List<Feed>>();
+            List<List<List<Feed>>> list_feedList = new List<List<List<Feed>>>();
+
+            //Loading system startup data
+            InMemoryObjects.LoadInMemoryObjects();
+
+            //Initiate fake data generation from fake market
+            //Later it will also include data generation from google finance
+            TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
+            FakeDataGenerator.StartFakeDataGeneration(updateDuration);
+
+
             IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
-            feedList = feeder.GetFeedList(2, 1, new TimeSpan(0, 0, 0));
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
-            sender.SendFeed(feedList);
-            foreach (var feeds in feedList)
+
+            //For each market start generating the data and pushing it into redis cache
+            for (int i = 1; i <= 10; i++)       // Get the stockValue for symbolId from 1 to 10
             {
-                try
-                {
-                    foreach (var feed in feeds)
-                    {
-                        string obj = String.Format("{0} - {1}", feed.SymbolId, feed.LTP);
-                        Console.WriteLine(obj);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+                feedList = feeder.GetFeedList(i, 1, TimeSpan.FromSeconds(10));      // Get the list of values for a given symbolId of a market for given time-span
+                sender.SendFeed(feedList);
             }
             Console.ReadKey();
         }
