@@ -14,15 +14,16 @@ using StockServices.Factory;
 using StockModel.Master;
 using FeederInterface.Feeder;
 using StockModel;
-using StockServices.Dashboard;
+using StockServices.DashBoard;
 using StockServices.FakeMarketService;
+using System.Timers;
 
 namespace StockFeeder
 {
     public partial class Feeder : ServiceBase
     {
         delegate void MethodDelegate();
-        List<List<Feed>> feedList = new List<List<Feed>>();
+        List<Feed> feedList = new List<Feed>();
         List<List<List<Feed>>> list_feedList = new List<List<List<Feed>>>();
 
         public Feeder()
@@ -41,23 +42,30 @@ namespace StockFeeder
 
         private void start()
         {
-            //Loading system startup data
-            InMemoryObjects.LoadInMemoryObjects();
+            //Loading system startup data for all the exchanges
+            List<Exchange> exchanges = new List<Exchange>();
+            exchanges.Add(Exchange.FAKE_NASDAQ);
+
+            InMemoryObjects.LoadInMemoryObjects(exchanges);
 
             //Initiate fake data generation from fake market
             //Later it will also include data generation from google finance
             TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
-            FakeDataGenerator.StartFakeDataGeneration(updateDuration);
+            FakeDataGenerator.StartFakeDataGeneration(300);
 
 
             IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
 
-            //For each market start generating the data and pushing it into redis cache
-            for (int i = 1; i <= 10; i++)       // Get the stockValue for symbolId from 1 to 10
+            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == Exchange.FAKE_NASDAQ).Symbols;
+
+            while (true)
             {
-                feedList = feeder.GetFeedList(i, 1, TimeSpan.FromSeconds(10));      // Get the list of values for a given symbolId of a market for given time-span
-                sender.SendFeed(feedList);
+                Parallel.ForEach(symbols, (symbol) =>
+                                {
+                                    feedList = feeder.GetFeedList(symbol.Id, 1, 10);      // Get the list of values for a given symbolId of a market for given time-span
+                                    sender.SendFeed(feedList);
+                                });
             }
         }
     }

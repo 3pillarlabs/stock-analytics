@@ -10,6 +10,6 @@ namespace StockModel
     {
         public int ExchangeId;
 
-        public List<SymbolFeeds> ExchaneSymbolFeed;
+        public List<SymbolFeeds> ExchangeSymbolFeed;
     }
 }

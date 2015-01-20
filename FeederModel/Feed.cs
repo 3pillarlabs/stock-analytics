@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace StockModel
 {
+    [Serializable]
     public class Feed
     {
         public long Id { get; set; }

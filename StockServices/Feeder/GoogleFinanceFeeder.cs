@@ -14,7 +14,13 @@ namespace StockServices.Feeder
             throw new NotImplementedException();
         }
 
-        public List<List<StockModel.Feed>> GetFeedList(int symbolId, int exchangeId, TimeSpan lastAccessTime)
+        public List<StockModel.Feed> GetFeedList(int symbolId, int exchangeId, long lastAccessTime)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public int DeleteFeedList(int symbolId, int exchangeId, long deleteListFrom, long deleteListTo)
         {
             throw new NotImplementedException();
         }

@@ -10,7 +10,7 @@ namespace StockServices.Master
 {
     public static class RedisCacheConfig
     {
-        public static ConnectionMultiplexer connection = null;
+        private static ConnectionMultiplexer connection = null;
 
         static RedisCacheConfig()
         {
@@ -34,6 +34,11 @@ namespace StockServices.Master
         {
             IDatabase cache = connection.GetDatabase();
             return cache;
+        }
+
+        public static ConnectionMultiplexer GetConnection()
+        {
+            return connection;
         }
     }
 }

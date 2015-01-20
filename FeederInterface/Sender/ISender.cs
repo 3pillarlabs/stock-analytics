@@ -10,7 +10,7 @@ namespace FeederInterface.Sender
 {
     public interface ISender
     {
-        Boolean SendFeed(List<List<Feed>> feed);
+        Boolean SendFeed(List<Feed> feed);
     }
 
 }

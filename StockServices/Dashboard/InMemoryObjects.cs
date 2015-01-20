@@ -6,51 +6,59 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StockServices.Dashboard
+namespace StockServices.DashBoard
 {
     public static class InMemoryObjects
     {
         static InMemoryObjects()
         {
             ExchangeSymbolList = new List<ExchangeSymbol>();
-            Feeds = new List<Feed>();
-            FakeFeeds = new List<Feed[]>();
+         
         }
 
         public static List<ExchangeSymbol> ExchangeSymbolList { get; set; }
-        public static List<Feed> Feeds { get; set; }
-        public static List<Feed[]> FakeFeeds { get; set; }
-
+        
         public static List<ExchangeFeeds> ExchangeFakeFeeds { get; set; }
 
 
-        public static void LoadInMemoryObjects()
+        public static void LoadInMemoryObjects(List<Exchange> exchanges)
         {
             //Load all symbols for all configured market
-            List<Exchange> exchanges = new List<Exchange>();
-            exchanges.Add(Exchange.FAKE_NASDAQ);
-            ExchangeSymbolList =SymbolService.GetSymbols(exchanges);
+            LoadInMemoryExchangeSymbols(exchanges);
+            LoadInMemoryExchangeFeeds(exchanges);
+        }
 
+        public static void LoadInMemoryExchangeSymbols(List<Exchange> exchanges)
+        {
+            
+            ExchangeSymbolList = SymbolService.GetSymbols(exchanges);
+        }
+
+        public static void LoadInMemoryExchangeFeeds(List<Exchange> exchanges)
+        {
+          
             ExchangeFakeFeeds = new List<ExchangeFeeds>();
 
             foreach (Exchange exchange in exchanges)
             {
                 ExchangeFeeds exchangeFeed = new ExchangeFeeds();
                 exchangeFeed.ExchangeId = Convert.ToInt32(exchange);
-                exchangeFeed.ExchaneSymbolFeed = new List<SymbolFeeds>();
-                
+                exchangeFeed.ExchangeSymbolFeed = new List<SymbolFeeds>();
+
+                if (ExchangeSymbolList.Count == 0) LoadInMemoryExchangeSymbols(exchanges);
+
                 foreach (Symbol symbol in ExchangeSymbolList.SingleOrDefault(x => x.Exchange == exchange).Symbols)
                 {
                     SymbolFeeds symbolFeeds = new SymbolFeeds();
                     symbolFeeds.SymbolId = symbol.Id;
                     symbolFeeds.Feeds = new List<Feed>();
-                    exchangeFeed.ExchaneSymbolFeed.Add(symbolFeeds);
+                    exchangeFeed.ExchangeSymbolFeed.Add(symbolFeeds);
                 }
                 ExchangeFakeFeeds.Add(exchangeFeed);
-                 
-            }
 
+            }
         }
+
 
     }
 }

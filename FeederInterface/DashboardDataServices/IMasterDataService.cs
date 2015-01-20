@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using StockModel.Master;
 
-namespace StockInterface.DashboardDataServices
+namespace StockInterface.DashBoardDataServices
 {
     public interface IMasterDataService
     {

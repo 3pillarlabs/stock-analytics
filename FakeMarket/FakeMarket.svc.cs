@@ -7,7 +7,7 @@ using System.ServiceModel.Web;
 using System.Text;
 using StockModel;
 using StockServices.FakeMarketService;
-using StockServices.Dashboard;
+using StockServices.DashBoard;
 
 
 namespace FakeMarket
@@ -21,10 +21,7 @@ namespace FakeMarket
         List<Symbol> symbolList = new List<Symbol>();
         public FakeMarket()
         {
-            if (InMemoryObjects.FakeFeeds.Count == 0)
-            {
-                FakeDataGenerator fakeData = new FakeDataGenerator();
-            }
+            
             
         }
 

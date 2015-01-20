@@ -10,31 +10,34 @@ using FeederInterface.Sender;
 using StockServices.Master;
 using System.Diagnostics;
 using System.IO;
+using StockModel;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using StockModel.Master;
+using StockServices.Util;
 
 namespace StockServices.Sender
 {
     public class RedisCacheSender : ISender
     {
         IDatabase cache = RedisCacheConfig.GetCache();
-        StreamWriter writer = new StreamWriter(new FileStream(@"d:\test.txt", FileMode.Append, FileAccess.Write));
+        ConnectionMultiplexer connection = RedisCacheConfig.GetConnection();
 
-        public bool SendFeed(List<List<StockModel.Feed>> feedListRange)
+        public bool SendFeed(List<StockModel.Feed> feeds)
         {
-            Stopwatch stopWatch = Stopwatch.StartNew();
-            List<StockModel.Feed> feed = new List<StockModel.Feed>();
-            feed = feedListRange[feedListRange.Count - 1];
+            ISubscriber sub = connection.GetSubscriber();
 
-            for(int j = 0; j< feed.Count; j++)
+
+            Parallel.ForEach(feeds, (feed) =>
             {
-                cache.StringSetAsync(feed[j].SymbolId.ToString() + j.ToString(), feed[j].LTP.ToString(), TimeSpan.FromMinutes(90)); // Sets the stockPrice as value in RedisCache for symbolId as a key
-                string value = cache.StringGet(feed[j].SymbolId.ToString() + j.ToString());
-                writer.WriteLine(value + "-" + feed[j].SymbolId.ToString() + j.ToString());
-            }
-            stopWatch.Stop();
-            
-            writer.WriteLine(stopWatch.ElapsedMilliseconds.ToString());
-            writer.Flush();
+                string text = Convert.ToBase64String(ObjectSerialization.SerializeToStream(feed).ToArray());
+                sub.PublishAsync(Exchange.FAKE_NASDAQ.ToString(), text);
+              
+            });
             return true;
         }
+
+
+        public ISubscriber IPublisher { get; set; }
     }
 }

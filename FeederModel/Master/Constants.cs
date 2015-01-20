@@ -14,8 +14,8 @@ namespace StockModel.Master
 
         public const  string SYMBOL_FILE_PATH = @"C:\Symbol.json"; 
         
-        public const int FAKE_DATA_GENERATE_INTERVAL =1000;
+        public const int FAKE_DATA_GENERATE_INTERVAL =100;
         
-        public const int FAKE_DATA_GENERATE_PERIOD =1000 * 60 * 10; 
+        public const int FAKE_DATA_GENERATE_PERIOD =1000 * 60 * 1; 
     }
 }
