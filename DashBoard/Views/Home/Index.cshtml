@@ -1,4 +1,5 @@
-﻿@{
+﻿@model DashBoard.Models.TrendModel
+@{
     ViewBag.Title = "Stock Analytics - Dashboard";
 }
 
@@ -47,9 +48,9 @@
                 selected: 1
             },
 
-            title: {
-                text: 'Trend Analysis'
-            },
+            //title: {
+            //    text: 'Trend Analysis'
+            //},
 
             exporting: {
                 enabled: false
@@ -85,7 +86,7 @@
         });
         var chart = $.connection.chartHub;
         function init() {
-            chart.server.getAllStocks(getParameterByName("symbolid")).done(function () {
+            chart.server.getAllStocks(getParameterByName("SelectedSymbol")).done(function () {
 
             });
         }
@@ -114,5 +115,37 @@
 </script>
 
 <div>
-    <div id="container"></div>
+    <div class="row">
+        @*<div class="col-md-12">
+                <div class="alert alert-info" role="alert"><strong>Search </strong></div>
+            </div>*@
+        <div class="panel panel-primary" style="margin-top:15px">
+            <div class="panel-heading">
+                <h3 class="panel-title">Search</h3>
+            </div>
+            @using (Html.BeginForm("Search", "Home", FormMethod.Get))
+            {
+            <div class="panel-body">
+                <div class="col-md-2">
+                    <div style="margin-top:10px">Market: @Html.DropDownListFor(model => model.SelectedExchange, Model.Exchange, new { @class = "form-control" })</div>
+                </div>
+                <div class="col-md-2">
+                    <div style="margin-top:10px">Symbol: @Html.DropDownListFor(model => model.SelectedSymbolId, Model.Symbols, new { @class = "form-control" })</div>
+                </div>
+                <div class="col-md-1">
+                    <div style="margin-top:10px">&nbsp; <input type="submit" value="Search" class="btn btn-primary btn-sm" /></div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-primary" style="margin-top:15px">
+            <div class="panel-heading">
+                <h3 class="panel-title">@Model.SelectedSymbolVal - Trend</h3>
+            </div>
+
+            <div id="container" class="col-md-12"></div>
+        </div>
+    </div>
 </div>

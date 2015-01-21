@@ -8,6 +8,7 @@ namespace StockModel.Master
 {
     public enum DropDownIdentifier
     {
+        EXCHANGE,
         SYMBOL
     }
 

@@ -1,17 +1,15 @@
-﻿
+﻿using StockModel.Master;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using StockModel.Master;
 using System.Web.Mvc;
 
-namespace StockInterface.DashBoardDataServices
+namespace StockInterface.Dashboard
 {
-    public interface IMasterDataService
+    public interface IMasterService
     {
         IEnumerable<SelectListItem> GetDropDownData(DropDownRequest request);
-    
     }
 }

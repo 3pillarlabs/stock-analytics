@@ -1,4 +1,6 @@
-﻿using System;
+﻿using StockModel.Master;
+using StockServices.DashBoard;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -16,6 +18,12 @@ namespace DashBoard
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            
+            List<Exchange> exchange = new List<Exchange>();
+            exchange.Add(Exchange.FAKE_NASDAQ);
+
+            InMemoryObjects.LoadInMemoryObjects(exchange);
         }
     }
 }

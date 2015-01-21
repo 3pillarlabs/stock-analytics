@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StockServices
+namespace StockServices.Tests
 {
-    public class SymbolService
+    public class Class1
     {
-        
     }
 }
