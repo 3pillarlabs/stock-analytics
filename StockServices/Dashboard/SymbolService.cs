@@ -40,7 +40,7 @@ namespace StockServices.DashBoard
                             break;
                         }
                 }
-                
+
                 exchangeSymbol.Symbols = symbols;
 
                 exchangeSymbols.Add(exchangeSymbol);
@@ -50,11 +50,11 @@ namespace StockServices.DashBoard
 
         }
 
-        private static List<StockModel.Symbol> GetSymbolForFakeMarket()
+        public static List<StockModel.Symbol> GetSymbolForFakeMarket()
         {
             // Method to get all the company names & their symbols and set their default value & Id
             int i = 1;
-            
+
             Random random = new Random();
             List<StockModel.Symbol> symbols = new List<StockModel.Symbol>();
             string jsonString = System.IO.File.ReadAllText(Constants.SYMBOL_FILE_PATH);
@@ -78,7 +78,7 @@ namespace StockServices.DashBoard
                 i = i + 1;
                 symbols.Add(symbol);
             }
-            
+
             return symbols;
         }
 

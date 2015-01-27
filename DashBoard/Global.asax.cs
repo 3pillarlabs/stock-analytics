@@ -1,4 +1,5 @@
-﻿using StockModel.Master;
+﻿using DashBoard.Hubs;
+using StockModel.Master;
 using StockServices.DashBoard;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,16 @@ namespace DashBoard
             exchange.Add(Exchange.FAKE_NASDAQ);
 
             InMemoryObjects.LoadInMemoryObjects(exchange);
+
+            
+
+
         }
+
+        protected void Application_End()
+        {
+            
+        }
+        
     }
 }

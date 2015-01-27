@@ -14,20 +14,30 @@ namespace StockServices.Master
 
         static RedisCacheConfig()
         {
-            var options = new ConfigurationOptions();
+            string isLocal = WebConfigReader.Read("IsLocal");
 
-            options.EndPoints.Add(WebConfigReader.Read("RedisKeyDns"), 6380);
-            options.Ssl = true;
+            if (isLocal == "1")
+            {
+                connection = ConnectionMultiplexer.Connect(WebConfigReader.Read("RedisServer"));
+            }
+            else
+            {
+                var options = new ConfigurationOptions();
 
-            options.Password = WebConfigReader.Read("RedisPassword");
-            options.AllowAdmin = true;
+                options.EndPoints.Add(WebConfigReader.Read("RedisKeyDns"), 6380);
+                options.Ssl = true;
 
-            // necessary?
-            options.KeepAlive = 30;
-            options.ConnectTimeout = 15000;
-            options.SyncTimeout = 15000;
+                options.Password = WebConfigReader.Read("RedisPassword");
+                options.AllowAdmin = true;
 
-            connection = ConnectionMultiplexer.Connect(options);
+                // necessary?
+                options.KeepAlive = 30;
+                options.ConnectTimeout = 15000;
+                options.SyncTimeout = 15000;
+
+                connection = ConnectionMultiplexer.Connect(options);
+            }
+
         }
 
         public static IDatabase GetCache()

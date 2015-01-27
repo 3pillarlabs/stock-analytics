@@ -24,7 +24,7 @@ namespace StockServices.Master
             }
             else
             {
-                throw new ArgumentNullException("Must pass a value to read settings from web.config");
+                throw new ArgumentException("Must pass a value to read settings from web.config");
             }
         }
     }
