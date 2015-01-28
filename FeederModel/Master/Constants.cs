@@ -10,12 +10,12 @@ namespace StockModel.Master
     {
         public const double  MAX_CHANGE_PERC =2.0;
 
-        public const double MIN_CHANGE_PERC=-2.0; 
-
-        public const  string SYMBOL_FILE_PATH = @"C:\Symbol.json"; 
+        public const double MIN_CHANGE_PERC=-2.0;
         
         public const int FAKE_DATA_GENERATE_INTERVAL =100;
         
-        public const int FAKE_DATA_GENERATE_PERIOD =1000 * 60 * 1; 
+        public const int FAKE_DATA_GENERATE_PERIOD =1000 * 60 * 1;
+
+        
     }
 }

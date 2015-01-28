@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using StockModel;
 using StockModel.Master;
+using StockServices.Master;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,7 +58,7 @@ namespace StockServices.DashBoard
 
             Random random = new Random();
             List<StockModel.Symbol> symbols = new List<StockModel.Symbol>();
-            string jsonString = System.IO.File.ReadAllText(Constants.SYMBOL_FILE_PATH);
+            string jsonString = System.IO.File.ReadAllText(WebConfigReader.Read("SymbolFilePath"));
             JArray jsonArray = JsonConvert.DeserializeObject<JArray>(jsonString);
             foreach (JObject jsonObject in jsonArray)
             {
