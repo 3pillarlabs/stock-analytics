@@ -94,10 +94,6 @@
       <Project>{04747988-9c7b-4898-ae62-655671408625}</Project>
       <Name>StockDataServices</Name>
     </ProjectReference>
-    <ProjectReference Include="..\StockFeeder\StockFeeder.csproj">
-      <Project>{beb15e40-99c2-4599-8ab9-33635481125b}</Project>
-      <Name>StockFeeder</Name>
-    </ProjectReference>
     <ProjectReference Include="..\StockServices\StockServices.csproj">
       <Project>{da76c3d5-99e2-46bd-b09b-66b06e65dcbd}</Project>
       <Name>StockServices</Name>
