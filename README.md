@@ -12,7 +12,7 @@ Configure following configuration keys both in Dashboard (Web Project)
 - RedisServerExePath: Path to the Redis Server executable *redis-server.exe*
 
 #Tools and framework
-- Install redis-2.8.17
+- Install redis-2.8.17 (available at https://github.com/MSOpenTech/redis/releases)
 
 #How to run it
 - run redis server on local machine. 
