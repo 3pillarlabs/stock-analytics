@@ -23,6 +23,10 @@ namespace StockServices.Factory
                     {
                         return new FakeMarketFeeder();
                     }
+                case FeederSourceSystem.YAHOO:
+                    {
+                        return new YahooFinanceFeeder();
+                    }
                 default:
                     {
                         return new GoogleFinanceFeeder();
