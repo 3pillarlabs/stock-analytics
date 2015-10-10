@@ -35,6 +35,11 @@ namespace StockServices.DashBoard
                             symbols = GetSymbolForFakeMarket();
                             break;
                         }
+                    case Exchange.ASX:
+                        {
+                            symbols = GetSymbolForFakeMarket();
+                            break;
+                        }
                     default:
                         {
                             symbols = GetSymbolForFakeMarket();

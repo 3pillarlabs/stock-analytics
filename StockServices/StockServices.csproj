@@ -46,6 +46,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.2\lib\net45\System.Web.Helpers.dll</HintPath>
@@ -85,9 +86,11 @@
     <Compile Include="FakeMarketService\FakeDataGenerator.cs" />
     <Compile Include="Feeder\FakeMarketFeeder.cs" />
     <Compile Include="Feeder\GoogleFinanceFeeder.cs" />
+    <Compile Include="Feeder\YahooFinanceFeeder.cs" />
     <Compile Include="Master\WebConfigReader.cs" />
     <Compile Include="Master\MasterService.cs" />
     <Compile Include="Master\RedisCacheConfig.cs" />
+    <Compile Include="PollingYahooMarketService\YahooDataGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sender\RedisCacheSender.cs" />
     <Compile Include="Util\ObjectSerialization.cs" />

@@ -15,15 +15,18 @@ namespace StockModel.Master
     public enum Exchange
     {
         NASDAQ,
-        FAKE_NASDAQ
+        FAKE_NASDAQ,
+        ASX,
+        NSDQ
     }
 
     public enum FeederSourceSystem
     {
         GOOGLE,
-        FAKEMARKET
+        FAKEMARKET,
+        YAHOO
     }
-
+    
     public enum FeederQueueSystem
     {
         REDIS_CACHE
