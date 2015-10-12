@@ -21,7 +21,7 @@ namespace StockServices.Feeder
             int i = -1;
             lock (YahooDataGenerator.thisLock)
             {
-                generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(Exchange.ASX)).SingleOrDefault().ExchangeSymbolFeed;
+                generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == exchangeId).SingleOrDefault().ExchangeSymbolFeed;
                 i = generatedData.Where(x => x.SymbolId == symbolId).SingleOrDefault().Feeds.RemoveAll(x => x.TimeStamp >= deleteListFrom && x.TimeStamp <= deleteListTo);
             }
             return i;
@@ -37,7 +37,7 @@ namespace StockServices.Feeder
 
             lock (YahooDataGenerator.thisLock)
             {
-                generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(exchangeId)).SingleOrDefault().ExchangeSymbolFeed;
+                generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == exchangeId).SingleOrDefault().ExchangeSymbolFeed;
                 feedsList = generatedData.Where(x => x.SymbolId == symbolId).SingleOrDefault().Feeds.Where(x => x.TimeStamp >= lastAccessTime).ToList();
             }
             return feedsList;

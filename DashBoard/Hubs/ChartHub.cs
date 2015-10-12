@@ -4,6 +4,7 @@ using Microsoft.AspNet.SignalR.Hubs;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using StockServices.Master;
+using StockModel.Master;
 
 namespace DashBoard.Hubs
 {
@@ -11,6 +12,7 @@ namespace DashBoard.Hubs
     public class ChartHub : Hub
     {
         private readonly ChartController _chartController;
+        
         public ChartHub() : this(ChartController.Instance) { }
 
         public ChartHub(ChartController chartController)
@@ -19,13 +21,13 @@ namespace DashBoard.Hubs
         }
 
         public void GetAllStocks(string symbolId)
-        {
-         
+        {         
             if (string.IsNullOrEmpty(symbolId))
             {
                 symbolId = "1";
             }
-            _chartController.GroupIdentifier = symbolId;
+            
+            _chartController.GroupIdentifier =  symbolId;
             JoinRoom(symbolId);
             //return the symbols and stock-exchanges' names to the client (web page)
         }
@@ -43,7 +45,8 @@ namespace DashBoard.Hubs
         public override Task OnConnected()
         {
             SignalConnectionManager.AddClient();
-            SignalConnectionManager.StartProcess();
+            
+            SignalConnectionManager.StartProcess(Context.QueryString["SelectedExchange"]);
 
             return base.OnConnected();
         }
@@ -77,7 +80,7 @@ namespace DashBoard.Hubs
             ConnectedClient -= 1;
         }
 
-        public static void StartProcess()
+        public static void StartProcess(string exchange)
         {
             lock (lockObj)
             {
@@ -85,9 +88,8 @@ namespace DashBoard.Hubs
                 {
                     StockDataGeneratorProcess = new Process();
                     StockDataGeneratorProcess.StartInfo.FileName = WebConfigReader.Read("DataGeneratorProcessPath");
-                    StockDataGeneratorProcess.Start();
-
-              
+                    StockDataGeneratorProcess.StartInfo.Arguments = exchange;
+                    StockDataGeneratorProcess.Start();              
                 }
             }
 

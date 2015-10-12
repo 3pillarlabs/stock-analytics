@@ -101,6 +101,9 @@
         }
 
         // Start the connection
+        var exchSelect = document.getElementById("SelectedExchange");
+        var selectedExchange = exchSelect.options[exchSelect.selectedIndex].text;
+        $.connection.hub.qs = "SelectedExchange=" + selectedExchange;
         $.connection.hub.start().done(init);
 
     });

@@ -31,10 +31,12 @@ namespace StockServices.PollingYahooMarketService
         private const string yql = "select * from yahoo.finance.quotes where symbol in (%22{0}%22)&StockExchange in (%22{1}%22)";
         private const string format = "json";
         private const string env = "store://datatables.org/alltableswithkeys";
+        private static Exchange exchange;
 
-        public static void StartDataGeneration(int updateTimePeriod)
+        public static void StartDataGeneration(int updateTimePeriod, Exchange exch)
         {
             updateDurationTime = updateTimePeriod;
+            exchange = exch;
             UpdateDataDelegate del = new UpdateDataDelegate(GenerateData);
             del.BeginInvoke(null, null);
         }
@@ -42,7 +44,8 @@ namespace StockServices.PollingYahooMarketService
         public static void GenerateData()
         {
             // Method to generate feeds and update the in memory objects
-            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == Exchange.ASX).Symbols;
+            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault
+                (x => x.Exchange == exchange).Symbols;
             UpdateData(symbols);
         }
 
@@ -60,14 +63,16 @@ namespace StockServices.PollingYahooMarketService
 
                 Parallel.ForEach(symbols, (symbol) =>
                 {
-                    Feed feed = GetFeed(symbol.SymbolCode, symbol.Id, Exchange.ASX.ToString());
+                    Feed feed = GetFeed(symbol.SymbolCode, symbol.Id, exchange.ToString());
 
                     //locking the static collection as it will be read from several sources, causing synchroization issues
                     lock (thisLock)
                     {
                         try
                         {
-                            InMemoryObjects.ExchangeFakeFeeds.Find(x => x.ExchangeId == Convert.ToInt32(Exchange.ASX)).ExchangeSymbolFeed.Find(x => x.SymbolId == symbol.Id).Feeds.Add(feed);
+                            InMemoryObjects.ExchangeFakeFeeds.Find
+                            (x => x.ExchangeId == Convert.ToInt32(exchange))
+                            .ExchangeSymbolFeed.Find(x => x.SymbolId == symbol.Id).Feeds.Add(feed);
                         }
                         catch (Exception ex)
                         {
