@@ -20,14 +20,20 @@ namespace DashBoard.Hubs
             _chartController = chartController;
         }
 
-        public void GetAllStocks(string symbolId)
+        public void GetAllStocks(string symbolId, string selectedExchange)
         {         
             if (string.IsNullOrEmpty(symbolId))
             {
                 symbolId = "1";
             }
-            
-            _chartController.GroupIdentifier =  symbolId;
+            if (string.IsNullOrEmpty(selectedExchange))
+            {
+                selectedExchange = "1";
+            }
+
+            string identifier = string.Format("{0}{1}", symbolId, selectedExchange);
+            _chartController.GroupIdentifier = symbolId;
+            _chartController.SelectedExchange = selectedExchange;
             JoinRoom(symbolId);
             //return the symbols and stock-exchanges' names to the client (web page)
         }

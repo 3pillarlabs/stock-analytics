@@ -34,6 +34,7 @@ namespace DashBoard.Controllers
     {
         // Singleton instance
         private readonly static Lazy<ChartController> _instance = new Lazy<ChartController>(() => new ChartController(GlobalHost.ConnectionManager.GetHubContext<ChartHub>().Clients));
+
         private readonly ConcurrentQueue<string> _stocks = new ConcurrentQueue<string>();
         private readonly TimeSpan _updateInterval = TimeSpan.FromSeconds(10);
 
@@ -47,6 +48,7 @@ namespace DashBoard.Controllers
         ConnectionMultiplexer connection = RedisCacheConfig.GetConnection();
 
         public string GroupIdentifier = "1";
+        public string SelectedExchange = "FAKE_NASDAQ";
 
         private void start()
         {
@@ -56,7 +58,7 @@ namespace DashBoard.Controllers
             ISubscriber sub = connection.GetSubscriber();
             Feed feed = null;
 
-            sub.Subscribe(Exchange.FAKE_NASDAQ.ToString(), (channel, message) =>
+            sub.Subscribe(SelectedExchange, (channel, message) =>
             {
                 string str = message;
                 binary = Convert.FromBase64String(message);

@@ -86,7 +86,8 @@
         });
         var chart = $.connection.chartHub;
         function init() {
-            chart.server.getAllStocks(getParameterByName("SelectedSymbolId")).done(function () {
+            chart.server.getAllStocks(getParameterByName("SelectedSymbolId"), getParameterByName("SelectedExchange")).done(function ()
+            {
 
             });
         }
@@ -130,7 +131,7 @@
             {
             <div class="panel-body">
                 <div class="col-md-2">
-                    <div style="margin-top:10px">Market: @Html.DropDownListFor(model => model.SelectedExchange, Model.Exchange, new { @class = "form-control" })</div>
+                    <div style="margin-top:10px">Exchange: @Html.DropDownListFor(model => model.SelectedExchange, Model.Exchange, new { @class = "form-control", @OnChange="this.form.submit();"})</div>
                 </div>
                 <div class="col-md-2">
                     <div style="margin-top:10px">Symbol: @Html.DropDownListFor(model => model.SelectedSymbolId, Model.Symbols, new { @class = "form-control" })</div>

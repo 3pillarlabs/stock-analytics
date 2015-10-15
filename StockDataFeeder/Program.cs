@@ -25,7 +25,12 @@ namespace StockDataFeeder
             //Loading system startup data for all the exchanges
             List<Exchange> exchanges = new List<Exchange>();
 
-            ResolveAppArgs(args, exchanges);
+            //default selected...
+            Exchange selectedExchange = Exchange.FAKE_NASDAQ;
+
+            ResolveAppArgs(args, selectedExchange);
+
+            exchanges = Enum.GetValues(typeof(Exchange)).OfType<Exchange>().ToList();
 
             InMemoryObjects.LoadInMemoryObjects(exchanges);
 
@@ -42,7 +47,7 @@ namespace StockDataFeeder
                 switch(configuredFeeder)
                 {
                     case FeederSourceSystem.YAHOO:
-                        YahooDataGenerator.StartDataGeneration(300, exchanges[0]);
+                        YahooDataGenerator.StartDataGeneration(300, selectedExchange);
                         break;
                     case FeederSourceSystem.FAKEMARKET:
                     default:
@@ -53,7 +58,7 @@ namespace StockDataFeeder
 
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
 
-            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == exchanges[0]).Symbols;
+            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == selectedExchange).Symbols;
             List<SymbolFeeds> generatedData = new List<SymbolFeeds>();
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
 
@@ -72,7 +77,7 @@ namespace StockDataFeeder
 
                     List<Feed> feedList = new List<Feed>();
 
-                    feedList = feeder.GetFeedList(symbol.Id, (int)exchanges[0], fetchTimeFrom);      // Get the list of values for a given symbolId of a market for given time-span
+                    feedList = feeder.GetFeedList(symbol.Id, (int)selectedExchange, fetchTimeFrom);      // Get the list of values for a given symbolId of a market for given time-span
                     sender.SendFeed(feedList);
 
                     if (feedList.Count > 0)
@@ -82,11 +87,11 @@ namespace StockDataFeeder
                         fetchTimeFrom = deleteTimeTo;
                     }
 
-                    j = feeder.DeleteFeedList(symbol.Id, (int)exchanges[0], deleteTimeFrom, deleteTimeTo);
+                    j = feeder.DeleteFeedList(symbol.Id, (int)selectedExchange, deleteTimeFrom, deleteTimeTo);
 
                     lock (FakeDataGenerator.thisLock)
                     {
-                        generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(exchanges[0])).SingleOrDefault().ExchangeSymbolFeed;
+                        generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(selectedExchange)).SingleOrDefault().ExchangeSymbolFeed;
                         int count = generatedData.Where(x => x.SymbolId == symbol.Id).SingleOrDefault().Feeds.Count();
                         Console.WriteLine(count.ToString());
                     }
@@ -96,24 +101,14 @@ namespace StockDataFeeder
             }
         }
 
-        private static void ResolveAppArgs(string[] args, List<Exchange> exchanges)
+        private static void ResolveAppArgs(string[] args, Exchange selectedExchange)
         {
             if (args != null && args.Length > 0)
             {
-                Exchange selectedExchange;
-
-                if(Enum.TryParse(args[0], out selectedExchange))
+                if(!Enum.TryParse(args[0], out selectedExchange))
                 {
-                    exchanges.Add(selectedExchange);
+                    selectedExchange = Exchange.FAKE_NASDAQ;
                 }
-                else
-                {
-                    exchanges.Add(Exchange.FAKE_NASDAQ);
-                }
-            }
-            else
-            {
-                exchanges.Add(Exchange.FAKE_NASDAQ);
             }
         }
     }
