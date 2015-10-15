@@ -31,10 +31,10 @@ namespace DashBoard.Hubs
                 selectedExchange = "1";
             }
 
-            string identifier = string.Format("{0}{1}", symbolId, selectedExchange);
-            _chartController.GroupIdentifier = symbolId;
+            string identifier = string.Format("{0}_{1}", symbolId, selectedExchange);
+            _chartController.GroupIdentifier = identifier;
             _chartController.SelectedExchange = selectedExchange;
-            JoinRoom(symbolId);
+            JoinRoom(identifier);
             //return the symbols and stock-exchanges' names to the client (web page)
         }
 

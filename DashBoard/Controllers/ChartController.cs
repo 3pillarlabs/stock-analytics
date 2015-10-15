@@ -48,7 +48,7 @@ namespace DashBoard.Controllers
         ConnectionMultiplexer connection = RedisCacheConfig.GetConnection();
 
         public string GroupIdentifier = "1";
-        public string SelectedExchange = "FAKE_NASDAQ";
+        public string SelectedExchange = "1";
 
         private void start()
         {
@@ -57,8 +57,9 @@ namespace DashBoard.Controllers
 
             ISubscriber sub = connection.GetSubscriber();
             Feed feed = null;
+            ;
 
-            sub.Subscribe(SelectedExchange, (channel, message) =>
+            sub.Subscribe(((Exchange)Enum.Parse(typeof(Exchange), SelectedExchange)).ToString(), (channel, message) =>
             {
                 string str = message;
                 binary = Convert.FromBase64String(message);
@@ -70,7 +71,7 @@ namespace DashBoard.Controllers
 
                 if (stockData != null && stockData.Length != 0)
                 {
-                    Clients.Group(feed.SymbolId.ToString()).updatePoints(stockData[0], stockData[1]);
+                    Clients.Group(feed.SymbolId.ToString() + "_" + SelectedExchange).updatePoints(stockData[0], stockData[1]);
                 }
 
             });
