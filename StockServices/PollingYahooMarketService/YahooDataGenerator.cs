@@ -198,7 +198,8 @@ namespace StockServices.PollingYahooMarketService
                     {
                         try
                         {
-                            hndl(fd);
+                            //send a copy
+                            hndl((Feed)fd.Clone());
                         }
                         catch
                         {

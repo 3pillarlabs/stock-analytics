@@ -94,7 +94,7 @@ namespace DashBoard.Hubs
                 {
                     StockDataGeneratorProcess = new Process();
                     StockDataGeneratorProcess.StartInfo.FileName = WebConfigReader.Read("DataGeneratorProcessPath");
-                    StockDataGeneratorProcess.StartInfo.Arguments = exchange;
+                    StockDataGeneratorProcess.StartInfo.Arguments = string.Format("\"{0}\" \"{1}\"", exchange, WebConfigReader.Read("DataGenerator"));
                     StockDataGeneratorProcess.Start();              
                 }
             }

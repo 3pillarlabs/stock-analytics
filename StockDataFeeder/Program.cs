@@ -20,6 +20,9 @@ namespace StockDataFeeder
 {
     class Program
     {
+        static IDataPublisher dataGenerator;
+        static Exchange selectedExchange;
+
         /// <summary>
         /// Application arguments:
         /// arg0: Selected Exchange. Has to be enum StockModel.Master.Exchange
@@ -32,10 +35,10 @@ namespace StockDataFeeder
             List<Exchange> exchanges = new List<Exchange>();
 
             //defaults selected...
-            Exchange selectedExchange = Exchange.FAKE_NASDAQ;
-            IDataPublisher dataGenerator = YahooDataGenerator.Instance;
+            selectedExchange = Exchange.FAKE_NASDAQ;
+            dataGenerator = YahooDataGenerator.Instance;
 
-            ResolveAppArgs(args, selectedExchange);
+            ResolveAppArgs(args);
 
             exchanges = Enum.GetValues(typeof(Exchange)).OfType<Exchange>().ToList();
 
@@ -54,29 +57,27 @@ namespace StockDataFeeder
             List<SymbolFeeds> generatedData = new List<SymbolFeeds>();
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
 
-
+            int feedCount = 0;
             Parallel.ForEach(symbols, (symbol) =>
             {
                 //subscribe
                 dataGenerator.SubscribeFeed(symbol.Id, (Feed fd) => {
-                    sender.SendFeed(new List<Feed>() {fd});
+                    sender.SendFeed(new List<Feed>() {fd}, selectedExchange.ToString());
 
-                    lock (FakeDataGenerator.thisLock)
-                    {
-                        generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(selectedExchange)).SingleOrDefault().ExchangeSymbolFeed;
-                        int count = generatedData.Where(x => x.SymbolId == symbol.Id).SingleOrDefault().Feeds.Count();
-                        Console.WriteLine(count.ToString());
-                    }
+                    Console.WriteLine(feedCount++);
                 });
-                List<Feed> feedList = new List<Feed>();
-                
 
             });
 
             Console.Read();
         }
 
-        private static void ResolveAppArgs(string[] args, Exchange selectedExchange)
+        /// <summary>
+        /// Process application args
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="selectedExchange"></param>
+        private static void ResolveAppArgs(string[] args)
         {
             if (args != null)
             {
@@ -84,8 +85,40 @@ namespace StockDataFeeder
                 {
                     if (!Enum.TryParse(args[0], out selectedExchange))
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Incorrect/missing app args for exchange. Setting default exchange as FAKE_NASDAQ");
+                        Console.ResetColor();
                         selectedExchange = Exchange.FAKE_NASDAQ;
                     }
+                }
+                if (args.Length > 1)
+                {
+                   switch(args[1].ToUpper())
+                    {
+                        case "YHOO":
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Setting data generator as YahooDataGenerator");
+                            Console.ResetColor();
+                            dataGenerator =  YahooDataGenerator.Instance;
+                            break;
+                        case "FAKE":
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Setting data generator as FakeDataGenerator");
+                            Console.ResetColor();
+                            dataGenerator = FakeDataGenerator.Instance;
+                            break;
+                        default:
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Unexpected app args for data generator");
+                            Console.ResetColor();
+                            throw new Exception("Unexpected app args for data generator.");
+                    }
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("App args missing for data generator. Using defaults.");
+                    Console.ResetColor();
                 }
             }
         }

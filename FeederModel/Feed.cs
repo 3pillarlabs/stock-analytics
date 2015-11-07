@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace StockModel
 {
     [Serializable]
-    public class Feed
+    public class Feed: ICloneable
     {
         public long Id { get; set; }
  
@@ -26,5 +29,17 @@ namespace StockModel
         public double Volume { get; set; }
 
         public Int64 TimeStamp { get; set; }
+
+        public object Clone()
+        {
+            IFormatter formatter = new BinaryFormatter();
+            Stream stream = new MemoryStream();
+            using (stream)
+            {
+                formatter.Serialize(stream, this);
+                stream.Seek(0, SeekOrigin.Begin);
+                return (Feed)formatter.Deserialize(stream);
+            }
+        }
     }
 }

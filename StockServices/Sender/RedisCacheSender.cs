@@ -1,20 +1,12 @@
 ﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using StackExchange.Redis;
-
 using FeederInterface.Sender;
+using StackExchange.Redis;
 using StockServices.Master;
-using System.Diagnostics;
-using System.IO;
-using StockModel;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using StockModel.Master;
 using StockServices.Util;
+using System;
+using StockModel;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace StockServices.Sender
 {
@@ -23,20 +15,40 @@ namespace StockServices.Sender
         IDatabase cache = RedisCacheConfig.GetCache();
         ConnectionMultiplexer connection = RedisCacheConfig.GetConnection();
 
-        public bool SendFeed(List<StockModel.Feed> feeds)
+        /// <summary>
+        /// Send a list of feeds to redis
+        /// </summary>
+        /// <param name="feeds"></param>
+        /// <param name="exchange"></param>
+        /// <returns></returns>
+        public bool SendFeed(List<Feed> feeds, string exchange)
         {
             ISubscriber sub = connection.GetSubscriber();
-
 
             Parallel.ForEach(feeds, (feed) =>
             {
                 string text = Convert.ToBase64String(ObjectSerialization.SerializeToStream(feed).ToArray());
-                sub.PublishAsync(Exchange.FAKE_NASDAQ.ToString(), text);
+                sub.PublishAsync(exchange, text);
               
             });
             return true;
         }
 
+        /// <summary>
+        /// Send a single feed to redis
+        /// </summary>
+        /// <param name="feed"></param>
+        /// <param name="exchange"></param>
+        /// <returns></returns>
+        public bool SendFeed(Feed feed, string exchange)
+        {
+            ISubscriber sub = connection.GetSubscriber();
+
+            string text = Convert.ToBase64String(ObjectSerialization.SerializeToStream(feed).ToArray());
+            sub.PublishAsync(exchange, text);
+
+            return true;
+        }
 
         public ISubscriber IPublisher { get; set; }
     }
