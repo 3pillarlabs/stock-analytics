@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using StockInterface.Feeder;
 using StockModel;
 using StockModel.Master;
 using StockServices.DashBoard;
@@ -11,80 +12,143 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
+/*
+Original test URL:
+private readonly string yqlURL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22{0}%22)&StockExchange%20in%20(%22{1}%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
+*/
+
 namespace StockServices.PollingYahooMarketService
 {
-    public class YahooDataGenerator
+    public class YahooDataGenerator: IDataPublisher
     {
-        public static Object thisLock = new Object();
-        private static int updateDurationTime = 300;
-        private delegate void UpdateDataDelegate();
+        public static Object LockDataGeneration = new Object();
 
+        #region private variables
+        static Object _lockSingleton = new Object();
+        static Object _lockSubscription = new Object();
+        private int _refreshInterval = 300;
+        private static YahooDataGenerator _instance;
 
-        /*
-        Original test URL:
-        private readonly string yqlURL = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22{0}%22)&StockExchange%20in%20(%22{1}%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
-        */
-
-        private static DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        private DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private const string baseYFinanceURL = "https://query.yahooapis.com/v1/public/yql";
 
         private const string yql = "select * from yahoo.finance.quotes where symbol in (%22{0}%22)&StockExchange in (%22{1}%22)";
         private const string format = "json";
         private const string env = "store://datatables.org/alltableswithkeys";
-        private static Exchange exchange;
+        private Exchange _exchange;
 
-        public static void StartDataGeneration(int updateTimePeriod, Exchange exch)
+        private Dictionary<int, List<OnFeedReceived>> notifyList;
+        #endregion
+
+        #region Singleton...
+        private YahooDataGenerator()
         {
-            updateDurationTime = updateTimePeriod;
-            exchange = exch;
-            UpdateDataDelegate del = new UpdateDataDelegate(GenerateData);
-            del.BeginInvoke(null, null);
+            //singleton...
+            notifyList = new Dictionary<int, List<OnFeedReceived>>();
         }
 
-        public static void GenerateData()
+        public static YahooDataGenerator Instance {
+            get
+            {
+                lock(_lockSingleton)
+                {
+                    if (_instance == null)
+                        _instance = new YahooDataGenerator();
+                }
+
+                return _instance;
+            }
+        }
+        #endregion
+
+        #region IDataPublisher members
+        public void StartDataGeneration(int refreshInterval, Exchange exchange)
+        {
+            _refreshInterval = refreshInterval;
+            this._exchange = exchange;
+
+            //Start data fetch in another thread
+            Task tskPollData = new Task(new Action(UpdateData));
+            tskPollData.Start();
+        }
+
+        /// <summary>
+        /// Method for subscribing to the feeds of a given symbol.
+        /// </summary>
+        /// <param name="sym">Symbol Id to subscribe to</param>
+        /// <param name="handler">Delegate for handling feed updates</param>
+        public void SubscribeFeed(int sym, OnFeedReceived handler)
+        {
+            lock(_lockSubscription)
+            {
+                if (notifyList.ContainsKey(sym))
+                {
+                    //assuming that if symbol exists, handler list would already be initialized
+                    notifyList[sym].Add(handler);
+                }
+                else
+                {
+                    notifyList.Add(sym, new List<OnFeedReceived>() { handler });
+                }
+            }
+        }
+
+        /// <summary>
+        /// Method for unsubscribing to stop receiving updates for a given symbol
+        /// </summary>
+        /// <param name="sym">Symbol id to unsubscribe from</param>
+        /// <param name="handler">handler to remove - multiple handlers may be attached to the same symbol</param>
+        public void UnsubscribeFeed(int sym, OnFeedReceived handler)
+        {
+            lock (_lockSubscription)
+            {
+                if (notifyList.ContainsKey(sym) && notifyList[sym].Contains(handler))
+                {
+                    notifyList[sym].Remove(handler);
+                }
+                else
+                {
+                    throw new Exception("Subscription required for unsubscribing!");
+                }
+            }
+        }
+
+        #endregion
+
+        #region Private methods
+        /// <summary>
+        /// Method for getting latest data  
+        /// against the configured symbols for the selected exchange
+        /// </summary>
+        private void UpdateData()
         {
             // Method to generate feeds and update the in memory objects
             List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault
-                (x => x.Exchange == exchange).Symbols;
-            UpdateData(symbols);
-        }
-
-
-        private static void UpdateData(object state)
-        {
-            List<StockModel.Symbol> symbols = (List<StockModel.Symbol>)state;
-            Feed[] feedsArray = new Feed[symbols.Count];
-
-            List<SymbolFeeds> symbolFeeds = new List<SymbolFeeds>();
+                (x => x.Exchange == _exchange).Symbols;
 
             while (true)
             {
-                Thread.Sleep(updateDurationTime);
+                Thread.Sleep(_refreshInterval);
 
                 Parallel.ForEach(symbols, (symbol) =>
                 {
-                    Feed feed = GetFeed(symbol.SymbolCode, symbol.Id, exchange.ToString());
+                    Feed feed = GetFeed(symbol.SymbolCode, symbol.Id, _exchange.ToString());
 
-                    //locking the static collection as it will be read from several sources, causing synchroization issues
-                    lock (thisLock)
-                    {
-                        try
-                        {
-                            InMemoryObjects.ExchangeFakeFeeds.Find
-                            (x => x.ExchangeId == Convert.ToInt32(exchange))
-                            .ExchangeSymbolFeed.Find(x => x.SymbolId == symbol.Id).Feeds.Add(feed);
-                        }
-                        catch (Exception ex)
-                        {
-                            //TODO: Logging
-                        }
-                    }
+                    //notify subscribers - later to be changed to only notify if there is any new data
+                    Notify(symbol.Id, feed);                   
                 });
 
             }
         }
 
-        private static Feed GetFeed(string symbol, int symbolId, string exchange)
+        /// <summary>
+        /// Method for requesting latest data from the yahoo server against a given exchange/symbol
+        /// </summary>
+        /// <param name="symbol">Symbol for which data is to be fetched</param>
+        /// <param name="symbolId">Unique symbol id for the symbol</param>
+        /// <param name="exchange">Exchange used</param>
+        /// <returns></returns>
+        private Feed GetFeed(string symbol, int symbolId, string exchange)
         {
 
             string url = string.Format("{0}?q={1}&format={2}&env={3}", baseYFinanceURL,
@@ -105,15 +169,48 @@ namespace StockServices.PollingYahooMarketService
             Feed fd = new Feed();
             fd.SymbolId = symbolId;
             fd.Id = symbolId;
+
             fd.High = Convert.ToDouble(string.IsNullOrEmpty(rootData.query.results.quote.DaysHigh) ? "0" : rootData.query.results.quote.DaysHigh);
+
             fd.Low = Convert.ToDouble(string.IsNullOrEmpty(rootData.query.results.quote.DaysLow) ? "0" : rootData.query.results.quote.DaysHigh);
+
             fd.LTP = Convert.ToDouble(string.IsNullOrEmpty(rootData.query.results.quote.LastTradePriceOnly) ? "0" : rootData.query.results.quote.DaysHigh);
+
             fd.Open = Convert.ToDouble(string.IsNullOrEmpty(rootData.query.results.quote.Open) ? "0" : rootData.query.results.quote.DaysHigh);
+
             fd.TimeStamp = Convert.ToInt64((DateTime.Now - epoch).TotalMilliseconds);
 
             return fd;
         }
+        
+        /// <summary>
+        /// Method for notifying all subscribers that feed has arrived.
+        /// </summary>
+        /// <param name="symbolId">Id of the symbol for which feed has arrived</param>
+        /// <param name="fd">Feed</param>
+        private void Notify(int symbolId, Feed fd)
+        {
+            lock(_lockSubscription)
+            {
+                if(notifyList.ContainsKey(symbolId))
+                {
+                    foreach (OnFeedReceived hndl in notifyList[symbolId])
+                    {
+                        try
+                        {
+                            hndl(fd);
+                        }
+                        catch
+                        {
+                            //ignore...
+                        }
+                    }
+                }
+            }
+        }
+        #endregion
 
+        #region classes for representing json response from yahoo server
         protected class Quote
         {
             public string symbol { get; set; }
@@ -218,5 +315,6 @@ namespace StockServices.PollingYahooMarketService
         {
             public Query query { get; set; }
         }
+        #endregion  
     }
 }

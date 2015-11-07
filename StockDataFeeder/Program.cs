@@ -14,80 +14,52 @@ using StockServices.FakeMarketService;
 using System.Threading;
 using System.Configuration;
 using StockServices.PollingYahooMarketService;
+using StockInterface.Feeder;
 
 namespace StockDataFeeder
 {
     class Program
     {
-        delegate void MethodDelegate();
+        /// <summary>
+        /// Application arguments:
+        /// arg0: Selected Exchange. Has to be enum StockModel.Master.Exchange
+        /// arg1: Data generator to use. Has to be IDataPublisher.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             //Loading system startup data for all the exchanges
             List<Exchange> exchanges = new List<Exchange>();
 
-            //default selected...
+            //defaults selected...
             Exchange selectedExchange = Exchange.FAKE_NASDAQ;
+            IDataPublisher dataGenerator = YahooDataGenerator.Instance;
 
             ResolveAppArgs(args, selectedExchange);
 
             exchanges = Enum.GetValues(typeof(Exchange)).OfType<Exchange>().ToList();
 
             InMemoryObjects.LoadInMemoryObjects(exchanges);
-
-            //Initiate fake data generation from fake market
-            //Later it will also include data generation from google finance
-            TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
             
-            FeederSourceSystem configuredFeeder;
-            IFeeder feeder = null; 
+            TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
 
-            if (Enum.TryParse(ConfigurationManager.AppSettings["Feeder"].ToString(), out configuredFeeder))
-            {
-                feeder = FeederFactory.GetFeeder(configuredFeeder);
-                switch(configuredFeeder)
-                {
-                    case FeederSourceSystem.YAHOO:
-                        YahooDataGenerator.StartDataGeneration(300, selectedExchange);
-                        break;
-                    case FeederSourceSystem.FAKEMARKET:
-                    default:
-                        FakeDataGenerator.StartFakeDataGeneration(300);
-                        break;
-                }
-            }
+            //Start data generation - this will start fetching data for all symbols of current exchange
+            //Later, need to change this to only subscribe to the specific symbol(s) selected.
+            dataGenerator.StartDataGeneration(300, selectedExchange);
 
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
 
             List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == selectedExchange).Symbols;
+
             List<SymbolFeeds> generatedData = new List<SymbolFeeds>();
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
 
-            int i = 1;
-            long deleteTimeFrom = -1;
-            long deleteTimeTo = -1;
-            long fetchTimeFrom = -1;
-            int j;
 
-            while (true)
+            Parallel.ForEach(symbols, (symbol) =>
             {
-                Thread.Sleep(300);
-
-                Parallel.ForEach(symbols, (symbol) =>
-                {
-
-                    List<Feed> feedList = new List<Feed>();
-
-                    feedList = feeder.GetFeedList(symbol.Id, (int)selectedExchange, fetchTimeFrom);      // Get the list of values for a given symbolId of a market for given time-span
-                    sender.SendFeed(feedList);
-
-                    if (feedList.Count > 0)
-                    {
-                        deleteTimeTo = feedList.OrderByDescending(x => x.TimeStamp).Take(1).SingleOrDefault().TimeStamp;
-                        deleteTimeFrom = feedList.OrderBy(x => x.TimeStamp).Take(1).SingleOrDefault().TimeStamp;
-                        fetchTimeFrom = deleteTimeTo;
-                    }
-
-                    j = feeder.DeleteFeedList(symbol.Id, (int)selectedExchange, deleteTimeFrom, deleteTimeTo);
+                //subscribe
+                dataGenerator.SubscribeFeed(symbol.Id, (Feed fd) => {
+                    sender.SendFeed(new List<Feed>() {fd});
 
                     lock (FakeDataGenerator.thisLock)
                     {
@@ -95,19 +67,25 @@ namespace StockDataFeeder
                         int count = generatedData.Where(x => x.SymbolId == symbol.Id).SingleOrDefault().Feeds.Count();
                         Console.WriteLine(count.ToString());
                     }
-
                 });
-                i++;
-            }
+                List<Feed> feedList = new List<Feed>();
+                
+
+            });
+
+            Console.Read();
         }
 
         private static void ResolveAppArgs(string[] args, Exchange selectedExchange)
         {
-            if (args != null && args.Length > 0)
+            if (args != null)
             {
-                if(!Enum.TryParse(args[0], out selectedExchange))
+                if (args.Length > 0)
                 {
-                    selectedExchange = Exchange.FAKE_NASDAQ;
+                    if (!Enum.TryParse(args[0], out selectedExchange))
+                    {
+                        selectedExchange = Exchange.FAKE_NASDAQ;
+                    }
                 }
             }
         }
