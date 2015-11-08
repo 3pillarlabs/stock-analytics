@@ -41,6 +41,7 @@ namespace DashBoard.Controllers
 
         public string GroupIdentifier = "1";
         public string SelectedExchange = "1";
+        public string SelectedSymbolId = "1";
 
         private void start()
         {
@@ -64,6 +65,20 @@ namespace DashBoard.Controllers
                 if (stockData != null && stockData.Length != 0)
                 {
                     Clients.Group(feed.SymbolId.ToString() + "_" + SelectedExchange).updatePoints(stockData[0], stockData[1]);
+                }
+
+            });
+
+            sub.Subscribe(Constants.REDIS_MVA_ROOM_PREFIX + SelectedSymbolId, (channel, message) =>
+            {
+                string str = message;
+                double[] stockData = new double[2];
+                stockData[0] = Convert.ToInt64((DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                stockData[1] = Convert.ToDouble(message);
+
+                if (stockData != null && stockData.Length != 0)
+                {
+                    Clients.Group(SelectedSymbolId + "_" + SelectedExchange).updatePointsMVA(stockData[0], stockData[1]);
                 }
 
             });

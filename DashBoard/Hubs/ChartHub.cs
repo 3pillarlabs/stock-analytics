@@ -34,6 +34,7 @@ namespace DashBoard.Hubs
             string identifier = string.Format("{0}_{1}", symbolId, selectedExchange);
             _chartController.GroupIdentifier = identifier;
             _chartController.SelectedExchange = selectedExchange;
+            _chartController.SelectedSymbolId = symbolId;
             JoinRoom(identifier);
             //return the symbols and stock-exchanges' names to the client (web page)
         }

@@ -14,7 +14,7 @@ namespace FeederInterface.Sender
 
         Boolean SendFeed(Feed feed, string exchange);
 
-        Boolean SendMVA(double mva, int symbolid);
+        Boolean SendMVA(double mva, string symbolid);
     }
 
 }

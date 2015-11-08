@@ -20,7 +20,6 @@ namespace StockDataFeeder
         static IDataPublisher dataGenerator;
         static Exchange selectedExchange;
         
-        static IAggregator<double, double> movingAvg;
         static ISender sender;
         /// <summary>
         /// Application arguments:
@@ -36,8 +35,6 @@ namespace StockDataFeeder
             //defaults selected...
             selectedExchange = Exchange.FAKE_NASDAQ;
             dataGenerator = YahooDataGenerator.Instance;
-            //TODO: Make configurable later
-            movingAvg = new MovingAverage();
 
             ResolveAppArgs(args);
 
@@ -59,9 +56,9 @@ namespace StockDataFeeder
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
             
             
-            Action<double, int> addMovingAverage = new Action<double, int>((val,id) => {
+            Action<double, string> addMovingAverage = new Action<double, string>((val,MVA_id) => {
 
-                sender.SendMVA(val, id);
+                sender.SendMVA(val, MVA_id);
 
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Sent value {0} to redis", val);
@@ -75,12 +72,11 @@ namespace StockDataFeeder
                 {
                     sender.SendFeed(fd, selectedExchange.ToString());
 
-
                     Console.WriteLine(fd.ToString());
                 });
-
+                
                 //add subscription for each aggregator configured
-                RXProcessing.AddAggregator(dataGenerator, movingAvg,
+                RXProcessing.AddAggregator(dataGenerator, new MovingAverage(),
                     addMovingAverage
                     , symbol.Id);
             });

@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Collections.Generic;
+using StockModel.Master;
 
 namespace StockServices.Aggregators
 {
@@ -15,7 +16,7 @@ namespace StockServices.Aggregators
 
         public static void AddAggregator(IDataPublisher publisher, 
             IAggregator<double, double> agg, 
-            Action<double, int> act, int symbolId)
+            Action<double, string> act, int symbolId)
         {
             eventAsObservable = from update in  Observable.FromEvent<OnFeedReceived, Feed>(
                 mktH => publisher.FeedArrived += mktH,
@@ -29,7 +30,7 @@ namespace StockServices.Aggregators
                 (acc, currentValue) =>
                 {
                     return agg.Aggregate(currentValue);
-                }).Subscribe((state) => act(state, symbolId));
+                }).Subscribe((state) => act(state, Constants.REDIS_MVA_ROOM_PREFIX + symbolId));
 
         }
     }
