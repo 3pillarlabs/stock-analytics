@@ -23,6 +23,8 @@ namespace StockServices.PollingYahooMarketService
     {
         public static Object LockDataGeneration = new Object();
 
+        public OnFeedReceived FeedArrived { get; set; }
+
         #region private variables
         static Object _lockSingleton = new Object();
         static Object _lockSubscription = new Object();
@@ -133,6 +135,9 @@ namespace StockServices.PollingYahooMarketService
                 Parallel.ForEach(symbols, (symbol) =>
                 {
                     Feed feed = GetFeed(symbol.SymbolCode, symbol.Id, _exchange.ToString());
+
+                    if (FeedArrived != null)
+                        FeedArrived((Feed)feed.Clone());
 
                     //notify subscribers - later to be changed to only notify if there is any new data
                     Notify(symbol.Id, feed);                   

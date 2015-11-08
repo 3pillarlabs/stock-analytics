@@ -1,20 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using FeederInterface.Feeder;
+﻿using FeederInterface.Sender;
+using StockInterface.DataProcessing;
+using StockInterface.Feeder;
 using StockModel;
 using StockModel.Master;
-using StockServices.Factory;
-using FeederInterface.Sender;
+using StockServices.Aggregators;
 using StockServices.DashBoard;
+using StockServices.Factory;
 using StockServices.FakeMarketService;
-using System.Threading;
-using System.Configuration;
 using StockServices.PollingYahooMarketService;
-using StockInterface.Feeder;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace StockDataFeeder
 {
@@ -22,7 +19,9 @@ namespace StockDataFeeder
     {
         static IDataPublisher dataGenerator;
         static Exchange selectedExchange;
-
+        
+        static IAggregator<double, double> movingAvg;
+        static ISender sender;
         /// <summary>
         /// Application arguments:
         /// arg0: Selected Exchange. Has to be enum StockModel.Master.Exchange
@@ -37,6 +36,8 @@ namespace StockDataFeeder
             //defaults selected...
             selectedExchange = Exchange.FAKE_NASDAQ;
             dataGenerator = YahooDataGenerator.Instance;
+            //TODO: Make configurable later
+            movingAvg = new MovingAverage();
 
             ResolveAppArgs(args);
 
@@ -50,28 +51,43 @@ namespace StockDataFeeder
             //Later, need to change this to only subscribe to the specific symbol(s) selected.
             dataGenerator.StartDataGeneration(300, selectedExchange);
 
-            ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
+            sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
 
             List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == selectedExchange).Symbols;
 
             List<SymbolFeeds> generatedData = new List<SymbolFeeds>();
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
+            
+            
+            Action<double, int> addMovingAverage = new Action<double, int>((val,id) => {
 
-            int feedCount = 0;
+                sender.SendMVA(val, id);
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Sent value {0} to redis", val);
+                Console.ResetColor();
+            });
+
             Parallel.ForEach(symbols, (symbol) =>
             {
                 //subscribe
-                dataGenerator.SubscribeFeed(symbol.Id, (Feed fd) => {
-                    sender.SendFeed(new List<Feed>() {fd}, selectedExchange.ToString());
+                dataGenerator.SubscribeFeed(symbol.Id, (Feed fd) =>
+                {
+                    sender.SendFeed(fd, selectedExchange.ToString());
 
-                    Console.WriteLine(feedCount++);
+
+                    Console.WriteLine(fd.ToString());
                 });
 
+                //add subscription for each aggregator configured
+                RXProcessing.AddAggregator(dataGenerator, movingAvg,
+                    addMovingAverage
+                    , symbol.Id);
             });
 
             Console.Read();
         }
-
+         
         /// <summary>
         /// Process application args
         /// </summary>

@@ -30,6 +30,12 @@ namespace StockModel
 
         public Int64 TimeStamp { get; set; }
 
+        public override string ToString()
+        {
+            return string.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}",
+               Id, SymbolId, LTP, Open, Close, High, Low, Volume, TimeStamp);
+        }
+
         public object Clone()
         {
             IFormatter formatter = new BinaryFormatter();

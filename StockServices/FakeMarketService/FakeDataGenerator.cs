@@ -17,6 +17,7 @@ namespace StockServices.FakeMarketService
     {
         #region Public variables
         public static Object LockDataGeneration = new Object();
+        public OnFeedReceived FeedArrived { get; set; }
         #endregion
 
         #region Private variables
@@ -132,6 +133,9 @@ namespace StockServices.FakeMarketService
                     feed.LTP = symbol.DefaultVal;
              
                     feed.TimeStamp = Convert.ToInt64((DateTime.Now - epoch).TotalMilliseconds);
+
+                    if (FeedArrived != null)
+                        FeedArrived((Feed)feed.Clone());
 
                     //notify subscribers - later to be changed to only notify if there is any new data
                     Notify(symbol.Id, feed);

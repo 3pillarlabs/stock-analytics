@@ -50,6 +50,14 @@ namespace StockServices.Sender
             return true;
         }
 
+        public bool SendMVA(double mva, int symbolid)
+        {
+            ISubscriber sub = connection.GetSubscriber();
+            
+            sub.PublishAsync(symbolid.ToString(), mva.ToString());
+
+            return true;
+        }
         public ISubscriber IPublisher { get; set; }
     }
 }

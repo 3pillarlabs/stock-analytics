@@ -13,6 +13,8 @@ namespace FeederInterface.Sender
         Boolean SendFeed(List<Feed> feed, string exchange);
 
         Boolean SendFeed(Feed feed, string exchange);
+
+        Boolean SendMVA(double mva, int symbolid);
     }
 
 }

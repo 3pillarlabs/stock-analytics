@@ -7,6 +7,8 @@ namespace StockInterface.Feeder
 
     public interface IDataPublisher
     {
+        OnFeedReceived FeedArrived { get; set; }
+
         void StartDataGeneration(int refreshInterval, Exchange exchange);
 
         void SubscribeFeed(int symbolId, OnFeedReceived handler);
