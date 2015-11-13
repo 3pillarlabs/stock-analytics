@@ -76,9 +76,9 @@ namespace StockDataFeeder
                 });
                 
                 //add subscription for each aggregator configured
-                RXProcessing.AddAggregator(dataGenerator, new MovingAverage(),
-                    addMovingAverage
-                    , symbol.Id);
+                //RXProcessing.AddAggregator(dataGenerator, new MovingAverage(),
+                //    addMovingAverage
+                //    , symbol.Id);
             });
 
             Console.Read();

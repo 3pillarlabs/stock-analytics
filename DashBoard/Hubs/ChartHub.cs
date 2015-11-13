@@ -74,6 +74,7 @@ namespace DashBoard.Hubs
         public static int ConnectedClient { get; set; }
 
         public static Process StockDataGeneratorProcess { get; set; }
+        public static Process MVAGeneratorProcess { get; set; }
         
 
         public static void AddClient()
@@ -96,7 +97,12 @@ namespace DashBoard.Hubs
                     StockDataGeneratorProcess = new Process();
                     StockDataGeneratorProcess.StartInfo.FileName = WebConfigReader.Read("DataGeneratorProcessPath");
                     StockDataGeneratorProcess.StartInfo.Arguments = string.Format("\"{0}\" \"{1}\"", exchange, WebConfigReader.Read("DataGenerator"));
-                    StockDataGeneratorProcess.Start();              
+                    StockDataGeneratorProcess.Start();
+
+                    MVAGeneratorProcess = new Process();
+                    MVAGeneratorProcess.StartInfo.FileName = WebConfigReader.Read("MVAGeneratorProcessPath");
+                    MVAGeneratorProcess.StartInfo.Arguments = string.Format("\"{0}\" \"{1}\"", Constants.REDIS_MVA_ROOM_PREFIX, exchange);
+                    MVAGeneratorProcess.Start();
                 }
             }
 
@@ -110,6 +116,7 @@ namespace DashBoard.Hubs
                 if (SignalConnectionManager.ConnectedClient == 0)
                 {
                     StockDataGeneratorProcess.Kill();
+                    MVAGeneratorProcess.Kill();
                 }
             }
         }
