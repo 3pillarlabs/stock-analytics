@@ -50,7 +50,6 @@ namespace DashBoard.Controllers
 
             ISubscriber sub = connection.GetSubscriber();
             Feed feed = null;
-            ;
 
             sub.Subscribe(((Exchange)Enum.Parse(typeof(Exchange), SelectedExchange)).ToString(), (channel, message) =>
             {
@@ -87,6 +86,28 @@ namespace DashBoard.Controllers
             {
                 Thread.Sleep(600000);
             }
+        }
+
+        public void UpdateSeriesSubscription(string oldSymId)
+        {
+            ISubscriber sub = connection.GetSubscriber();
+            sub.Unsubscribe(Constants.REDIS_MVA_ROOM_PREFIX + oldSymId);
+
+
+            sub.Subscribe(Constants.REDIS_MVA_ROOM_PREFIX + SelectedSymbolId, (channel, message) =>
+            {
+                string str = message;
+                double[] stockData = new double[2];
+                stockData[0] = Convert.ToInt64((DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                stockData[1] = Convert.ToDouble(message);
+
+                if (stockData != null && stockData.Length != 0)
+                {
+                    Clients.Group(SelectedSymbolId + "_" + SelectedExchange).updatePointsMVA(stockData[0], stockData[1]);
+                }
+
+            });
+
         }
 
         public ChartController(IHubConnectionContext<dynamic> clients)
