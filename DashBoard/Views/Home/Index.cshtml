@@ -117,8 +117,8 @@
         chart.client.updatePoints = function (time, stockValue) {
             curTime = parseInt(time);
             value = parseFloat(stockValue);
-            var chart = $('#container').highcharts('StockChart'),
-            series = chart.series[0];
+            //var chart = $('#container').highcharts('StockChart'),
+            series = Highcharts.charts[0].series[0];
             series.addPoint([curTime, value], true, true);
             chart.redraw;
         }
@@ -127,8 +127,8 @@
         {
             curTime = parseInt(time);
             value = parseFloat(stockValue);
-            var chart = $('#container').highcharts('StockChart'),
-            series = chart.series[1];
+            //var chart = $('#container').highcharts('StockChart'),
+            series = Highcharts.charts[0].series[1];
             series.addPoint([curTime, value], true, true);
             chart.redraw;
         }
