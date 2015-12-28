@@ -20,15 +20,25 @@ namespace DashBoard.Hubs
             _chartController = chartController;
         }
 
-        public void GetAllStocks(string symbolId)
+        public void GetAllStocks(string symbolId, string selectedExchange)
         {         
             if (string.IsNullOrEmpty(symbolId))
             {
                 symbolId = "1";
             }
-            
-            _chartController.GroupIdentifier =  symbolId;
-            JoinRoom(symbolId);
+            if (string.IsNullOrEmpty(selectedExchange))
+            {
+                selectedExchange = "1";
+            }
+
+            string identifier = string.Format("{0}_{1}", symbolId, selectedExchange);
+            _chartController.GroupIdentifier = identifier;
+            _chartController.SelectedExchange = selectedExchange;
+            string oldSymbolId = _chartController.SelectedSymbolId;
+            _chartController.SelectedSymbolId = symbolId;
+            _chartController.UpdateSeriesSubscription(oldSymbolId);
+
+            JoinRoom(identifier);
             //return the symbols and stock-exchanges' names to the client (web page)
         }
 
@@ -67,6 +77,7 @@ namespace DashBoard.Hubs
         public static int ConnectedClient { get; set; }
 
         public static Process StockDataGeneratorProcess { get; set; }
+        public static Process MVAGeneratorProcess { get; set; }
         
 
         public static void AddClient()
@@ -88,8 +99,13 @@ namespace DashBoard.Hubs
                 {
                     StockDataGeneratorProcess = new Process();
                     StockDataGeneratorProcess.StartInfo.FileName = WebConfigReader.Read("DataGeneratorProcessPath");
-                    StockDataGeneratorProcess.StartInfo.Arguments = exchange;
-                    StockDataGeneratorProcess.Start();              
+                    StockDataGeneratorProcess.StartInfo.Arguments = string.Format("\"{0}\" \"{1}\"", exchange, WebConfigReader.Read("DataGenerator"));
+                    StockDataGeneratorProcess.Start();
+
+                    MVAGeneratorProcess = new Process();
+                    MVAGeneratorProcess.StartInfo.FileName = WebConfigReader.Read("MVAGeneratorProcessPath");
+                    MVAGeneratorProcess.StartInfo.Arguments = string.Format("\"{0}\" \"{1}\"", Constants.REDIS_MVA_ROOM_PREFIX, exchange);
+                    MVAGeneratorProcess.Start();
                 }
             }
 
@@ -103,6 +119,7 @@ namespace DashBoard.Hubs
                 if (SignalConnectionManager.ConnectedClient == 0)
                 {
                     StockDataGeneratorProcess.Kill();
+                    MVAGeneratorProcess.Kill();
                 }
             }
         }

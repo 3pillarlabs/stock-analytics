@@ -19,7 +19,7 @@ namespace StockServices.Feeder
         public int DeleteFeedList(int symbolId, int exchangeId, long deleteListFrom, long deleteListTo)
         {
             int i = -1;
-            lock (YahooDataGenerator.thisLock)
+            lock (YahooDataGenerator.LockDataGeneration)
             {
                 generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == exchangeId).SingleOrDefault().ExchangeSymbolFeed;
                 i = generatedData.Where(x => x.SymbolId == symbolId).SingleOrDefault().Feeds.RemoveAll(x => x.TimeStamp >= deleteListFrom && x.TimeStamp <= deleteListTo);
@@ -35,7 +35,7 @@ namespace StockServices.Feeder
 
             symbolList = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == exchange).Symbols;
 
-            lock (YahooDataGenerator.thisLock)
+            lock (YahooDataGenerator.LockDataGeneration)
             {
                 generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == exchangeId).SingleOrDefault().ExchangeSymbolFeed;
                 feedsList = generatedData.Where(x => x.SymbolId == symbolId).SingleOrDefault().Feeds.Where(x => x.TimeStamp >= lastAccessTime).ToList();

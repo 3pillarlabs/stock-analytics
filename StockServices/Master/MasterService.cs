@@ -27,7 +27,7 @@ namespace StockServices.Master
                     }
                 case DropDownIdentifier.SYMBOL:
                     {
-                        dropDownData = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == Exchange.FAKE_NASDAQ).Symbols.Select(x => new SelectListItem()
+                        dropDownData = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == request.Exchange).Symbols.Select(x => new SelectListItem()
                         {
                             Text = x.SymbolName.ToString(),
                             Value = ((int)x.Id).ToString()

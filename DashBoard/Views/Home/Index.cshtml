@@ -65,7 +65,7 @@
             },
 
             series: [{
-                name: 'time',
+                name: 'LTP',
                 data: (function () {
                     var data = [], i;
                     var day = new Date();
@@ -82,11 +82,34 @@
                     }
                     return data;
                 }())
-            }]
+            },
+            {
+                name: 'MVA',
+                data: (function ()
+                {
+                    var data = [], i;
+                    var day = new Date();
+                    var date = day.getDate();
+                    var month = day.getMonth();
+                    var year = day.getFullYear();
+                    var time = (new Date(year, month, date)).getTime();
+
+                    for (i = 0 * 60; i <= 9 * 60; i += 1)
+                    {
+                        data.push([
+                            time + i * 60000,
+                            null
+                        ]);
+                    }
+                    return data;
+                }())
+            }
+            ]
         });
         var chart = $.connection.chartHub;
         function init() {
-            chart.server.getAllStocks(getParameterByName("SelectedSymbolId")).done(function () {
+            chart.server.getAllStocks(getParameterByName("SelectedSymbolId"), getParameterByName("SelectedExchange")).done(function ()
+            {
 
             });
         }
@@ -94,8 +117,18 @@
         chart.client.updatePoints = function (time, stockValue) {
             curTime = parseInt(time);
             value = parseFloat(stockValue);
-            var chart = $('#container').highcharts('StockChart'),
-            series = chart.series[0];
+            //var chart = $('#container').highcharts('StockChart'),
+            series = Highcharts.charts[0].series[0];
+            series.addPoint([curTime, value], true, true);
+            chart.redraw;
+        }
+
+        chart.client.updatePointsMVA = function (time, stockValue)
+        {
+            curTime = parseInt(time);
+            value = parseFloat(stockValue);
+            //var chart = $('#container').highcharts('StockChart'),
+            series = Highcharts.charts[0].series[1];
             series.addPoint([curTime, value], true, true);
             chart.redraw;
         }
@@ -130,7 +163,7 @@
             {
             <div class="panel-body">
                 <div class="col-md-2">
-                    <div style="margin-top:10px">Market: @Html.DropDownListFor(model => model.SelectedExchange, Model.Exchange, new { @class = "form-control" })</div>
+                    <div style="margin-top:10px">Exchange: @Html.DropDownListFor(model => model.SelectedExchange, Model.Exchange, new { @class = "form-control", @OnChange="this.form.submit();"})</div>
                 </div>
                 <div class="col-md-2">
                     <div style="margin-top:10px">Symbol: @Html.DropDownListFor(model => model.SelectedSymbolId, Model.Symbols, new { @class = "form-control" })</div>
