@@ -12,7 +12,8 @@ using FeederInterface.Sender;
 using StockServices.DashBoard;
 using StockServices.FakeMarketService;
 using System.Threading;
-
+using System.Configuration;
+using StockServices.PollingYahooMarketService;
 
 namespace StockDataFeeder
 {
@@ -23,20 +24,36 @@ namespace StockDataFeeder
         {
             //Loading system startup data for all the exchanges
             List<Exchange> exchanges = new List<Exchange>();
-            exchanges.Add(Exchange.FAKE_NASDAQ);
+
+            ResolveAppArgs(args, exchanges);
 
             InMemoryObjects.LoadInMemoryObjects(exchanges);
 
             //Initiate fake data generation from fake market
             //Later it will also include data generation from google finance
             TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
-            FakeDataGenerator.StartFakeDataGeneration(300);
+            
+            FeederSourceSystem configuredFeeder;
+            IFeeder feeder = null; 
 
+            if (Enum.TryParse(ConfigurationManager.AppSettings["Feeder"].ToString(), out configuredFeeder))
+            {
+                feeder = FeederFactory.GetFeeder(configuredFeeder);
+                switch(configuredFeeder)
+                {
+                    case FeederSourceSystem.YAHOO:
+                        YahooDataGenerator.StartDataGeneration(300, exchanges[0]);
+                        break;
+                    case FeederSourceSystem.FAKEMARKET:
+                    default:
+                        FakeDataGenerator.StartFakeDataGeneration(300);
+                        break;
+                }
+            }
 
-            IFeeder feeder = FeederFactory.GetFeeder(FeederSourceSystem.FAKEMARKET);
             ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
 
-            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == Exchange.FAKE_NASDAQ).Symbols;
+            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == exchanges[0]).Symbols;
             List<SymbolFeeds> generatedData = new List<SymbolFeeds>();
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
 
@@ -55,7 +72,7 @@ namespace StockDataFeeder
 
                     List<Feed> feedList = new List<Feed>();
 
-                    feedList = feeder.GetFeedList(symbol.Id, 1, fetchTimeFrom);      // Get the list of values for a given symbolId of a market for given time-span
+                    feedList = feeder.GetFeedList(symbol.Id, (int)exchanges[0], fetchTimeFrom);      // Get the list of values for a given symbolId of a market for given time-span
                     sender.SendFeed(feedList);
 
                     if (feedList.Count > 0)
@@ -65,17 +82,38 @@ namespace StockDataFeeder
                         fetchTimeFrom = deleteTimeTo;
                     }
 
-                    j = feeder.DeleteFeedList(symbol.Id, 1, deleteTimeFrom, deleteTimeTo);
+                    j = feeder.DeleteFeedList(symbol.Id, (int)exchanges[0], deleteTimeFrom, deleteTimeTo);
 
                     lock (FakeDataGenerator.thisLock)
                     {
-                        generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(Exchange.FAKE_NASDAQ)).SingleOrDefault().ExchangeSymbolFeed;
+                        generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(exchanges[0])).SingleOrDefault().ExchangeSymbolFeed;
                         int count = generatedData.Where(x => x.SymbolId == symbol.Id).SingleOrDefault().Feeds.Count();
                         Console.WriteLine(count.ToString());
                     }
 
                 });
                 i++;
+            }
+        }
+
+        private static void ResolveAppArgs(string[] args, List<Exchange> exchanges)
+        {
+            if (args != null && args.Length > 0)
+            {
+                Exchange selectedExchange;
+
+                if(Enum.TryParse(args[0], out selectedExchange))
+                {
+                    exchanges.Add(selectedExchange);
+                }
+                else
+                {
+                    exchanges.Add(Exchange.FAKE_NASDAQ);
+                }
+            }
+            else
+            {
+                exchanges.Add(Exchange.FAKE_NASDAQ);
             }
         }
     }
