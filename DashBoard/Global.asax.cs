@@ -21,14 +21,9 @@ namespace DashBoard
             BundleConfig.RegisterBundles(BundleTable.Bundles);
 
             
-            List<Exchange> exchange = new List<Exchange>();
-            exchange.Add(Exchange.FAKE_NASDAQ);
+            List<Exchange> exchanges = Enum.GetValues(typeof(Exchange)).OfType<Exchange>().ToList();
 
-            InMemoryObjects.LoadInMemoryObjects(exchange);
-
-            
-
-
+            InMemoryObjects.LoadInMemoryObjects(exchanges);
         }
 
         protected void Application_End()

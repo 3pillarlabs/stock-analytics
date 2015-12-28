@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Configuration;
 
 namespace StockServices.DashBoard
 {
@@ -19,35 +20,11 @@ namespace StockServices.DashBoard
 
             foreach (Exchange exchange in exchanges)
             {
-                List<Symbol> symbols = new List<Symbol>();
                 ExchangeSymbol exchangeSymbol = new ExchangeSymbol();
+
                 exchangeSymbol.Exchange = exchange;
 
-                switch (exchange)
-                {
-                    case Exchange.FAKE_NASDAQ:
-                        {
-                            symbols = GetSymbolForFakeMarket();
-                            break;
-                        }
-                    case Exchange.NASDAQ:
-                        {
-                            symbols = GetSymbolForFakeMarket();
-                            break;
-                        }
-                    case Exchange.ASX:
-                        {
-                            symbols = GetSymbolForFakeMarket();
-                            break;
-                        }
-                    default:
-                        {
-                            symbols = GetSymbolForFakeMarket();
-                            break;
-                        }
-                }
-
-                exchangeSymbol.Symbols = symbols;
+                exchangeSymbol.Symbols = GetSymbolForMarket(exchange); ;
 
                 exchangeSymbols.Add(exchangeSymbol);
             }
@@ -56,15 +33,29 @@ namespace StockServices.DashBoard
 
         }
 
-        public static List<StockModel.Symbol> GetSymbolForFakeMarket()
+        public static List<StockModel.Symbol> GetSymbolForMarket(Exchange exchange)
         {
             // Method to get all the company names & their symbols and set their default value & Id
             int i = 1;
 
             Random random = new Random();
             List<StockModel.Symbol> symbols = new List<StockModel.Symbol>();
-            string jsonString = System.IO.File.ReadAllText(WebConfigReader.Read("SymbolFilePath"));
+            string jsonString;
+            string symbolFilePath = string.Empty;
+            
+            //exchange specific symbol file paths are configured
+            symbolFilePath = WebConfigurationManager.AppSettings[exchange.ToString() + "_SymbolFilePath"];
+
+            //exchange specific symbol file paths are not configured. Pick Defaults.
+            if (string.IsNullOrEmpty(symbolFilePath))
+            {
+                symbolFilePath = WebConfigReader.Read("SymbolFilePath");
+            }
+
+            jsonString = System.IO.File.ReadAllText(symbolFilePath);
+
             JArray jsonArray = JsonConvert.DeserializeObject<JArray>(jsonString);
+
             foreach (JObject jsonObject in jsonArray)
             {
                 StockModel.Symbol symbol = new StockModel.Symbol();
@@ -78,6 +69,7 @@ namespace StockServices.DashBoard
                     {
                         symbol.SymbolCode = property.Value.ToString();
                     }
+
                     symbol.DefaultVal = random.NextDouble() * 1000;
                     symbol.Id = i;
                 }

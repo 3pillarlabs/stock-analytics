@@ -17,6 +17,8 @@ namespace StockModel.Master
     public class DropDownRequest
     {
         public DropDownIdentifier Identifier { get; set; }
+
+        public Exchange Exchange { get; set; }
     }
 
 }

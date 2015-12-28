@@ -1,32 +1,24 @@
-﻿using Microsoft.AspNet.SignalR;
+﻿using DashBoard.Hubs;
+using FeederInterface.Feeder;
+using Microsoft.AspNet.SignalR;
 using Microsoft.AspNet.SignalR.Hubs;
-using DashBoard.Hubs;
-using System;
-using System.Collections.Concurrent;
-using System.Web.Mvc;
-using System.Threading;
-using System.Net;
-using System.Text.RegularExpressions;
-using System.IO;
-using System.Drawing;
-using System.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 using SignalRChart.Web.Models;
-using StockServices.Factory;
-using StockModel.Master;
-using FeederInterface.Feeder;
-using StockServices.DashBoard;
-using FeederInterface.Sender;
-using StockServices.FakeMarketService;
-using System.Threading.Tasks;
 using StackExchange.Redis;
-using StockServices.Master;
 using StockModel;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+using StockModel.Master;
+using StockServices.Factory;
+using StockServices.Master;
 using StockServices.Util;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Web.Mvc;
 
 namespace DashBoard.Controllers
 {
@@ -34,6 +26,7 @@ namespace DashBoard.Controllers
     {
         // Singleton instance
         private readonly static Lazy<ChartController> _instance = new Lazy<ChartController>(() => new ChartController(GlobalHost.ConnectionManager.GetHubContext<ChartHub>().Clients));
+
         private readonly ConcurrentQueue<string> _stocks = new ConcurrentQueue<string>();
         private readonly TimeSpan _updateInterval = TimeSpan.FromSeconds(10);
 
@@ -47,6 +40,8 @@ namespace DashBoard.Controllers
         ConnectionMultiplexer connection = RedisCacheConfig.GetConnection();
 
         public string GroupIdentifier = "1";
+        public string SelectedExchange = "1";
+        public string SelectedSymbolId = "1";
 
         private void start()
         {
@@ -56,7 +51,7 @@ namespace DashBoard.Controllers
             ISubscriber sub = connection.GetSubscriber();
             Feed feed = null;
 
-            sub.Subscribe(Exchange.FAKE_NASDAQ.ToString(), (channel, message) =>
+            sub.Subscribe(((Exchange)Enum.Parse(typeof(Exchange), SelectedExchange)).ToString(), (channel, message) =>
             {
                 string str = message;
                 binary = Convert.FromBase64String(message);
@@ -68,7 +63,21 @@ namespace DashBoard.Controllers
 
                 if (stockData != null && stockData.Length != 0)
                 {
-                    Clients.Group(feed.SymbolId.ToString()).updatePoints(stockData[0], stockData[1]);
+                    Clients.Group(feed.SymbolId.ToString() + "_" + SelectedExchange).updatePoints(stockData[0], stockData[1]);
+                }
+
+            });
+
+            sub.Subscribe(Constants.REDIS_MVA_ROOM_PREFIX + SelectedSymbolId, (channel, message) =>
+            {
+                string str = message;
+                double[] stockData = new double[2];
+                stockData[0] = Convert.ToInt64((DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                stockData[1] = Convert.ToDouble(message);
+
+                if (stockData != null && stockData.Length != 0)
+                {
+                    Clients.Group(SelectedSymbolId + "_" + SelectedExchange).updatePointsMVA(stockData[0], stockData[1]);
                 }
 
             });
@@ -77,6 +86,28 @@ namespace DashBoard.Controllers
             {
                 Thread.Sleep(600000);
             }
+        }
+
+        public void UpdateSeriesSubscription(string oldSymId)
+        {
+            ISubscriber sub = connection.GetSubscriber();
+            sub.Unsubscribe(Constants.REDIS_MVA_ROOM_PREFIX + oldSymId);
+
+
+            sub.Subscribe(Constants.REDIS_MVA_ROOM_PREFIX + SelectedSymbolId, (channel, message) =>
+            {
+                string str = message;
+                double[] stockData = new double[2];
+                stockData[0] = Convert.ToInt64((DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                stockData[1] = Convert.ToDouble(message);
+
+                if (stockData != null && stockData.Length != 0)
+                {
+                    Clients.Group(SelectedSymbolId + "_" + SelectedExchange).updatePointsMVA(stockData[0], stockData[1]);
+                }
+
+            });
+
         }
 
         public ChartController(IHubConnectionContext<dynamic> clients)
