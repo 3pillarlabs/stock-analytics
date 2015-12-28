@@ -1,119 +1,137 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using FeederInterface.Feeder;
+﻿using FeederInterface.Sender;
+using StockInterface.DataProcessing;
+using StockInterface.Feeder;
 using StockModel;
 using StockModel.Master;
-using StockServices.Factory;
-using FeederInterface.Sender;
+using StockServices.Aggregators;
 using StockServices.DashBoard;
+using StockServices.Factory;
 using StockServices.FakeMarketService;
-using System.Threading;
-using System.Configuration;
 using StockServices.PollingYahooMarketService;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace StockDataFeeder
 {
     class Program
     {
-        delegate void MethodDelegate();
+        static IDataPublisher dataGenerator;
+        static Exchange selectedExchange;
+        
+        static ISender sender;
+        /// <summary>
+        /// Application arguments:
+        /// arg0: Selected Exchange. Has to be enum StockModel.Master.Exchange
+        /// arg1: Data generator to use. Has to be IDataPublisher.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             //Loading system startup data for all the exchanges
             List<Exchange> exchanges = new List<Exchange>();
 
-            ResolveAppArgs(args, exchanges);
+            //defaults selected...
+            selectedExchange = Exchange.FAKE_NASDAQ;
+            dataGenerator = YahooDataGenerator.Instance;
+
+            ResolveAppArgs(args);
+
+            exchanges = Enum.GetValues(typeof(Exchange)).OfType<Exchange>().ToList();
 
             InMemoryObjects.LoadInMemoryObjects(exchanges);
-
-            //Initiate fake data generation from fake market
-            //Later it will also include data generation from google finance
-            TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
             
-            FeederSourceSystem configuredFeeder;
-            IFeeder feeder = null; 
+            TimeSpan updateDuration = TimeSpan.FromMilliseconds(Constants.FAKE_DATA_GENERATE_PERIOD);
 
-            if (Enum.TryParse(ConfigurationManager.AppSettings["Feeder"].ToString(), out configuredFeeder))
-            {
-                feeder = FeederFactory.GetFeeder(configuredFeeder);
-                switch(configuredFeeder)
-                {
-                    case FeederSourceSystem.YAHOO:
-                        YahooDataGenerator.StartDataGeneration(300, exchanges[0]);
-                        break;
-                    case FeederSourceSystem.FAKEMARKET:
-                    default:
-                        FakeDataGenerator.StartFakeDataGeneration(300);
-                        break;
-                }
-            }
+            //Start data generation - this will start fetching data for all symbols of current exchange
+            //Later, need to change this to only subscribe to the specific symbol(s) selected.
+            dataGenerator.StartDataGeneration(300, selectedExchange);
 
-            ISender sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
+            sender = SenderFactory.GetSender(FeederQueueSystem.REDIS_CACHE);
 
-            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == exchanges[0]).Symbols;
+            List<StockModel.Symbol> symbols = InMemoryObjects.ExchangeSymbolList.SingleOrDefault(x => x.Exchange == selectedExchange).Symbols;
+
             List<SymbolFeeds> generatedData = new List<SymbolFeeds>();
             List<StockModel.Symbol> symbolList = new List<StockModel.Symbol>();
+            
+            
+            Action<double, string> addMovingAverage = new Action<double, string>((val,MVA_id) => {
 
-            int i = 1;
-            long deleteTimeFrom = -1;
-            long deleteTimeTo = -1;
-            long fetchTimeFrom = -1;
-            int j;
+                sender.SendMVA(val, MVA_id);
 
-            while (true)
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Sent value {0} to redis", val);
+                Console.ResetColor();
+            });
+
+            Parallel.ForEach(symbols, (symbol) =>
             {
-                Thread.Sleep(300);
-
-                Parallel.ForEach(symbols, (symbol) =>
+                //subscribe
+                dataGenerator.SubscribeFeed(symbol.Id, (Feed fd) =>
                 {
+                    sender.SendFeed(fd, selectedExchange.ToString());
 
-                    List<Feed> feedList = new List<Feed>();
-
-                    feedList = feeder.GetFeedList(symbol.Id, (int)exchanges[0], fetchTimeFrom);      // Get the list of values for a given symbolId of a market for given time-span
-                    sender.SendFeed(feedList);
-
-                    if (feedList.Count > 0)
-                    {
-                        deleteTimeTo = feedList.OrderByDescending(x => x.TimeStamp).Take(1).SingleOrDefault().TimeStamp;
-                        deleteTimeFrom = feedList.OrderBy(x => x.TimeStamp).Take(1).SingleOrDefault().TimeStamp;
-                        fetchTimeFrom = deleteTimeTo;
-                    }
-
-                    j = feeder.DeleteFeedList(symbol.Id, (int)exchanges[0], deleteTimeFrom, deleteTimeTo);
-
-                    lock (FakeDataGenerator.thisLock)
-                    {
-                        generatedData = InMemoryObjects.ExchangeFakeFeeds.Where(x => x.ExchangeId == Convert.ToInt32(exchanges[0])).SingleOrDefault().ExchangeSymbolFeed;
-                        int count = generatedData.Where(x => x.SymbolId == symbol.Id).SingleOrDefault().Feeds.Count();
-                        Console.WriteLine(count.ToString());
-                    }
-
+                    Console.WriteLine(fd.ToString());
                 });
-                i++;
-            }
+                
+                //add subscription for each aggregator configured
+                //RXProcessing.AddAggregator(dataGenerator, new MovingAverage(),
+                //    addMovingAverage
+                //    , symbol.Id);
+            });
+
+            Console.Read();
         }
-
-        private static void ResolveAppArgs(string[] args, List<Exchange> exchanges)
+         
+        /// <summary>
+        /// Process application args
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="selectedExchange"></param>
+        private static void ResolveAppArgs(string[] args)
         {
-            if (args != null && args.Length > 0)
+            if (args != null)
             {
-                Exchange selectedExchange;
-
-                if(Enum.TryParse(args[0], out selectedExchange))
+                if (args.Length > 0)
                 {
-                    exchanges.Add(selectedExchange);
+                    if (!Enum.TryParse(args[0], out selectedExchange))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Incorrect/missing app args for exchange. Setting default exchange as FAKE_NASDAQ");
+                        Console.ResetColor();
+                        selectedExchange = Exchange.FAKE_NASDAQ;
+                    }
+                }
+                if (args.Length > 1)
+                {
+                   switch(args[1].ToUpper())
+                    {
+                        case "YHOO":
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Setting data generator as YahooDataGenerator");
+                            Console.ResetColor();
+                            dataGenerator =  YahooDataGenerator.Instance;
+                            break;
+                        case "FAKE":
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Setting data generator as FakeDataGenerator");
+                            Console.ResetColor();
+                            dataGenerator = FakeDataGenerator.Instance;
+                            break;
+                        default:
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Unexpected app args for data generator");
+                            Console.ResetColor();
+                            throw new Exception("Unexpected app args for data generator.");
+                    }
                 }
                 else
                 {
-                    exchanges.Add(Exchange.FAKE_NASDAQ);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("App args missing for data generator. Using defaults.");
+                    Console.ResetColor();
                 }
-            }
-            else
-            {
-                exchanges.Add(Exchange.FAKE_NASDAQ);
             }
         }
     }

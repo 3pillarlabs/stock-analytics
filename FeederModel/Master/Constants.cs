@@ -16,6 +16,6 @@ namespace StockModel.Master
         
         public const int FAKE_DATA_GENERATE_PERIOD =1000 * 60 * 1;
 
-        
+        public const string REDIS_MVA_ROOM_PREFIX = "MVA_";
     }
 }
