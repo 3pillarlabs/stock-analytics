@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Feeder", "Feeder", "{2FD39F2D-913A-452D-A137-4F023AE76B53}"
 EndProject
@@ -30,6 +30,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aggregators", "Aggregators", "{18FF7CE6-16AD-4A9D-9929-0E8B76D09723}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LTPMovingAverage", "LTPMovingAverage\LTPMovingAverage.csproj", "{A45D6EAD-5F1B-4272-9F46-12316B19314C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MVA_NEsper", "MVA_NEsper\MVA_NEsper.csproj", "{015B9EA1-EAD8-4599-B002-F06667F6297F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{A45D6EAD-5F1B-4272-9F46-12316B19314C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A45D6EAD-5F1B-4272-9F46-12316B19314C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A45D6EAD-5F1B-4272-9F46-12316B19314C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{015B9EA1-EAD8-4599-B002-F06667F6297F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{015B9EA1-EAD8-4599-B002-F06667F6297F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{015B9EA1-EAD8-4599-B002-F06667F6297F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{015B9EA1-EAD8-4599-B002-F06667F6297F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,5 +88,6 @@ Global
 		{BC18EF55-86CF-40EB-B9F7-95AF13BF08A3} = {8BCB6E36-3DBC-4F99-A512-4587FBE341A3}
 		{172D2249-CAFC-482F-87F3-C51F703A1A72} = {2FD39F2D-913A-452D-A137-4F023AE76B53}
 		{A45D6EAD-5F1B-4272-9F46-12316B19314C} = {18FF7CE6-16AD-4A9D-9929-0E8B76D09723}
+		{015B9EA1-EAD8-4599-B002-F06667F6297F} = {18FF7CE6-16AD-4A9D-9929-0E8B76D09723}
 	EndGlobalSection
 EndGlobal
